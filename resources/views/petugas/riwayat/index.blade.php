@@ -4,256 +4,378 @@
 
 @push('styles')
 <style>
-.filter-chip {
-    display: inline-flex; align-items: center;
-    padding: 6px 14px; border-radius: 20px;
-    font-size: 0.78rem; font-weight: 600;
-    border: 1.5px solid #e2e8f0;
-    background: #fff; color: #64748b;
-    cursor: pointer; transition: all 0.15s;
-    white-space: nowrap;
+.riw-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
 }
-.filter-chip.active { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
-
-.trx-item {
-    background: #fff;
-    border-radius: 14px;
-    border: 1.5px solid #e2e8f0;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    display: flex; align-items: center; gap: 12px;
-    cursor: pointer;
-    transition: box-shadow 0.15s, transform 0.1s;
-    text-decoration: none;
-    color: inherit;
-}
-.trx-item:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.trx-icon {
-    width: 44px; height: 44px; border-radius: 12px;
+.riw-header h1 { font-size: 1.1rem; font-weight: 800; color: var(--charcoal); }
+.riw-header p  { font-size: .75rem; color: var(--gray-400); margin-top: 1px; }
+.riw-header .btn-filter {
+    width: 38px; height: 38px; border-radius: 11px;
+    background: var(--white); border: 1px solid var(--gray-200);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; flex-shrink: 0;
+    color: var(--gray-600); cursor: pointer; position: relative;
 }
-.status-lunas { background: #dcfce7; }
-.status-belum { background: #fff7ed; }
-.badge {
-    display: inline-flex; align-items: center;
-    padding: 2px 8px; border-radius: 10px;
-    font-size: 0.7rem; font-weight: 700;
+.btn-filter .dot {
+    position: absolute; top: 6px; right: 6px; width: 8px; height: 8px;
+    background: var(--blue-light); border-radius: 50%;
+    border: 2px solid var(--white);
 }
-.badge-lunas { background: #dcfce7; color: #16a34a; }
-.badge-belum { background: #fff7ed; color: #ea580c; }
 
 .summary-bar {
     display: grid; grid-template-columns: 1fr 1fr 1fr;
     gap: 8px; margin-bottom: 16px;
 }
 .summary-item {
-    background: #fff; border-radius: 12px;
-    border: 1.5px solid #e2e8f0;
-    padding: 10px 12px; text-align: center;
+    background: var(--white); border-radius: 12px;
+    border: 1px solid var(--gray-100);
+    padding: 12px 10px; text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,.03);
 }
-.summary-val { font-size: 1.1rem; font-weight: 800; color: #1e3a5f; }
-.summary-lbl { font-size: 0.68rem; color: #94a3b8; margin-top: 2px; }
+.summary-val { font-size: 1.25rem; font-weight: 800; line-height: 1; }
+.summary-lbl { font-size: .66rem; color: var(--gray-400); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+
+.chip-row {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px;
+    margin-bottom: 12px; scrollbar-width: none;
+}
+.chip-row::-webkit-scrollbar { display: none; }
+.chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 14px; border-radius: 20px;
+    font-size: .76rem; font-weight: 700;
+    border: 1.5px solid var(--gray-200);
+    background: var(--white); color: var(--gray-500);
+    white-space: nowrap;
+}
+.chip.active {
+    background: var(--navy); color: var(--white); border-color: var(--navy);
+}
 
 .date-badge {
-    font-size: 0.72rem; font-weight: 700; color: #64748b;
-    text-transform: uppercase; letter-spacing: 0.5px;
-    padding: 8px 0 4px;
+    font-size: .72rem; font-weight: 800; color: var(--gray-500);
+    text-transform: uppercase; letter-spacing: .5px;
+    padding: 10px 4px 6px; display: flex; align-items: center; gap: 6px;
 }
+.date-badge .count { color: var(--gray-400); font-weight: 600; }
 
-.plate-chip {
-    font-family: 'Courier New', monospace;
-    font-weight: 700; font-size: 0.9rem;
-    color: #1e3a5f;
+.trx-item {
+    background: var(--white); border-radius: 14px;
+    border: 1px solid var(--gray-100);
+    padding: 12px 14px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+    transition: all .15s; color: inherit;
+    box-shadow: 0 1px 3px rgba(0,0,0,.03);
 }
+.trx-item:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.06); }
+
+.trx-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05rem; flex-shrink: 0;
+}
+.trx-icon.lunas { background: var(--success-soft); color: var(--success); }
+.trx-icon.belum { background: var(--warning-soft); color: var(--warning); }
+
+.trx-body { flex: 1; min-width: 0; }
+.trx-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px; gap: 8px;
+}
+.trx-plate {
+    font-family: 'Courier New', monospace;
+    font-weight: 800; font-size: .92rem; letter-spacing: 1px;
+    color: var(--charcoal);
+}
+.trx-loc {
+    font-size: .72rem; color: var(--gray-500);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: flex; align-items: center; gap: 4px;
+}
+.trx-mid {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 4px;
+}
+.trx-time { font-size: .7rem; color: var(--gray-400); }
+.trx-money { font-size: .82rem; font-weight: 800; color: var(--success); }
+.trx-money.belum { color: var(--gray-400); }
+
+.empty-state {
+    text-align: center; padding: 50px 16px; color: var(--gray-400);
+    background: var(--white); border-radius: 14px;
+    border: 1.5px dashed var(--gray-200);
+}
+.empty-state .ic { font-size: 3rem; margin-bottom: 10px; }
+.empty-state .ttl { font-weight: 700; color: var(--gray-600); margin-bottom: 4px; font-size: .92rem; }
+.empty-state .sb { font-size: .78rem; }
+
+/* Pagination */
+.pagi {
+    display: flex; justify-content: center; gap: 8px;
+    margin-top: 16px; align-items: center;
+}
+.pagi a, .pagi span {
+    padding: 9px 14px; border-radius: 10px; font-size: .82rem; font-weight: 700;
+    text-decoration: none;
+}
+.pagi .cur { background: var(--blue-light); color: var(--white); }
+.pagi .lnk { background: var(--white); border: 1px solid var(--gray-200); color: var(--gray-700); }
+.pagi .dis { background: var(--gray-100); color: var(--gray-400); }
+
+/* Filter dialog */
+.filter-dialog { width: 100%; max-width: 460px; }
+
+/* Detail dialog */
+.detail-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px; border-bottom: 1px solid var(--gray-100);
+}
+.detail-head h3 { font-size: 1rem; font-weight: 800; color: var(--charcoal); }
+.detail-body { padding: 16px 18px; }
+.detail-plate-bx {
+    background: linear-gradient(135deg, var(--navy), var(--blue-light));
+    color: #fff; border-radius: 14px;
+    text-align: center; padding: 18px;
+    margin-bottom: 14px;
+}
+.detail-plate-bx .lbl { font-size: .66rem; opacity: .8; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.detail-plate-bx .val { font-family: 'Courier New', monospace; font-size: 1.7rem; font-weight: 800; letter-spacing: 2px; margin-top: 4px; }
+.detail-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
+}
+.detail-grid .it {
+    background: var(--gray-50); border-radius: 10px; padding: 10px 12px;
+}
+.detail-grid .it .l { font-size: .68rem; color: var(--gray-500); font-weight: 600; margin-bottom: 3px; }
+.detail-grid .it .v { font-size: .85rem; font-weight: 700; color: var(--charcoal); }
+.detail-total {
+    background: var(--success-soft); border-radius: 12px;
+    padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+}
+.detail-total .l { font-size: .82rem; color: #047857; font-weight: 700; }
+.detail-total .v { font-size: 1.15rem; color: #065f46; font-weight: 800; }
 </style>
 @endpush
 
 @section('content')
-<div class="px-4 pt-2 pb-28">
 
-    {{-- Header --}}
-    <div class="flex items-center justify-between mb-4">
-        <div>
-            <h1 class="text-lg font-bold text-slate-800">Riwayat Parkir</h1>
-            <p class="text-xs text-slate-500">{{ auth()->user()->nama }}</p>
-        </div>
-        <button onclick="document.getElementById('filterModal').showModal()"
-            class="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm">
-            <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M7 8h10M11 12h4"/>
-            </svg>
-        </button>
+<div class="riw-header">
+    <div>
+        <h1>Riwayat Parkir</h1>
+        <p>{{ auth()->user()->nama }}</p>
     </div>
-
-    {{-- Summary --}}
-    <div class="summary-bar">
-        <div class="summary-item">
-            <div class="summary-val">{{ $totalTrx }}</div>
-            <div class="summary-lbl">Total Trx</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-val text-green-700">{{ $totalLunas }}</div>
-            <div class="summary-lbl">Lunas</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-val text-orange-600">{{ $totalBelum }}</div>
-            <div class="summary-lbl">Parkir</div>
-        </div>
-    </div>
-
-    {{-- Quick Filter Chips --}}
-    <div class="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1" style="scrollbar-width:none">
-        <a href="{{ route('petugas.riwayat') }}" class="filter-chip {{ !request('status') && !request('tgl') ? 'active' : '' }}">Semua</a>
-        <a href="{{ route('petugas.riwayat', ['status' => '0']) }}" class="filter-chip {{ request('status') === '0' ? 'active' : '' }}">🟡 Parkir</a>
-        <a href="{{ route('petugas.riwayat', ['status' => '1']) }}" class="filter-chip {{ request('status') === '1' ? 'active' : '' }}">✅ Lunas</a>
-        <a href="{{ route('petugas.riwayat', ['tgl' => now()->format('Y-m-d')]) }}" class="filter-chip {{ request('tgl') === now()->format('Y-m-d') ? 'active' : '' }}">📅 Hari Ini</a>
-    </div>
-
-    {{-- Transaksi List --}}
-    @forelse($transaksis->groupBy(fn($t) => \Carbon\Carbon::parse($t->tgl)->format('Y-m-d')) as $tgl => $group)
-        <div class="date-badge">
-            {{ \Carbon\Carbon::parse($tgl)->translatedFormat('l, d F Y') }}
-            <span class="text-slate-400 font-normal">({{ $group->count() }} transaksi)</span>
-        </div>
-
-        @foreach($group as $trx)
-        <div class="trx-item" onclick="showDetail('{{ $trx->id }}')">
-            <div class="trx-icon {{ $trx->status == 1 ? 'status-lunas' : 'status-belum' }}">
-                {{ $trx->status == 1 ? '✅' : '🟡' }}
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="plate-chip">{{ $trx->nomor_polisi }}</span>
-                    <span class="badge {{ $trx->status == 1 ? 'badge-lunas' : 'badge-belum' }}">
-                        {{ $trx->status == 1 ? 'LUNAS' : 'PARKIR' }}
-                    </span>
-                </div>
-                <div class="text-xs text-slate-500 truncate">📍 {{ $trx->lokasi->nama ?? '-' }}</div>
-                <div class="flex items-center justify-between mt-1">
-                    <span class="text-xs text-slate-400">
-                        🕐 {{ \Carbon\Carbon::parse($trx->jam_masuk)->format('H:i') }}
-                        @if($trx->jam_keluar)
-                            → {{ \Carbon\Carbon::parse($trx->jam_keluar)->format('H:i') }}
-                        @else
-                            → sekarang
-                        @endif
-                    </span>
-                    <span class="text-xs font-bold text-green-700">Rp {{ number_format($trx->tarif->tarif ?? 0, 0, ',', '.') }}</span>
-                </div>
-            </div>
-        </div>
-        @endforeach
-    @empty
-        <div class="text-center py-16">
-            <div class="text-5xl mb-3">📋</div>
-            <p class="font-semibold text-slate-600">Belum ada transaksi</p>
-            <p class="text-xs text-slate-400 mt-1">Transaksi akan muncul di sini</p>
-        </div>
-    @endforelse
-
-    {{-- Pagination --}}
-    @if($transaksis->hasPages())
-    <div class="flex justify-center gap-3 mt-4">
-        @if($transaksis->onFirstPage())
-            <span class="px-4 py-2 bg-slate-100 text-slate-400 rounded-lg text-sm">← Prev</span>
-        @else
-            <a href="{{ $transaksis->previousPageUrl() }}" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium">← Prev</a>
+    <button onclick="document.getElementById('filterModal').showModal()" class="btn-filter">
+        <i class="fa-solid fa-sliders"></i>
+        @if(request('tgl') || request('nomor_polisi'))
+        <span class="dot"></span>
         @endif
-        <span class="px-4 py-2 bg-blue-700 text-white rounded-lg text-sm font-bold">{{ $transaksis->currentPage() }}</span>
-        @if($transaksis->hasMorePages())
-            <a href="{{ $transaksis->nextPageUrl() }}" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium">Next →</a>
-        @else
-            <span class="px-4 py-2 bg-slate-100 text-slate-400 rounded-lg text-sm">Next →</span>
-        @endif
-    </div>
-    @endif
-
+    </button>
 </div>
 
+<div class="summary-bar">
+    <div class="summary-item">
+        <div class="summary-val" style="color:var(--navy);">{{ $totalTrx }}</div>
+        <div class="summary-lbl">Total</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-val" style="color:var(--success);">{{ $totalLunas }}</div>
+        <div class="summary-lbl">Lunas</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-val" style="color:var(--warning);">{{ $totalBelum }}</div>
+        <div class="summary-lbl">Parkir</div>
+    </div>
+</div>
+
+<div class="chip-row">
+    <a href="{{ route('petugas.riwayat') }}" class="chip {{ !request('status') && !request('tgl') ? 'active' : '' }}">
+        <i class="fa-solid fa-list"></i> Semua
+    </a>
+    <a href="{{ route('petugas.riwayat', ['status' => '0']) }}" class="chip {{ request('status') === '0' ? 'active' : '' }}">
+        <i class="fa-solid fa-clock"></i> Parkir
+    </a>
+    <a href="{{ route('petugas.riwayat', ['status' => '1']) }}" class="chip {{ request('status') === '1' ? 'active' : '' }}">
+        <i class="fa-solid fa-circle-check"></i> Lunas
+    </a>
+    <a href="{{ route('petugas.riwayat', ['tgl' => now()->format('Y-m-d')]) }}" class="chip {{ request('tgl') === now()->format('Y-m-d') ? 'active' : '' }}">
+        <i class="fa-solid fa-calendar-day"></i> Hari Ini
+    </a>
+</div>
+
+@forelse($transaksis->groupBy(fn($t) => \Carbon\Carbon::parse($t->tgl)->format('Y-m-d')) as $tgl => $group)
+    <div class="date-badge">
+        <i class="fa-solid fa-calendar"></i>
+        {{ \Carbon\Carbon::parse($tgl)->translatedFormat('l, d F Y') }}
+        <span class="count">· {{ $group->count() }} transaksi</span>
+    </div>
+
+    @foreach($group as $trx)
+    <div class="trx-item" onclick="showDetail({{ $trx->id }})" style="cursor:pointer;">
+        <div class="trx-icon {{ $trx->status == 1 ? 'lunas' : 'belum' }}">
+            <i class="fa-solid fa-{{ $trx->status == 1 ? 'circle-check' : 'clock' }}"></i>
+        </div>
+        <div class="trx-body">
+            <div class="trx-top">
+                <span class="trx-plate">{{ $trx->nomor_polisi }}</span>
+                <span class="badge {{ $trx->status == 1 ? 'badge-success' : 'badge-warning' }}">
+                    {{ $trx->status == 1 ? 'LUNAS' : 'PARKIR' }}
+                </span>
+            </div>
+            <div class="trx-loc">
+                <i class="fa-solid fa-location-dot"></i>
+                {{ $trx->lokasi->nama ?? '-' }} · {{ $trx->tarif->nama ?? '-' }}
+            </div>
+            <div class="trx-mid">
+                <span class="trx-time">
+                    <i class="fa-regular fa-clock"></i>
+                    {{ \Carbon\Carbon::parse($trx->jam_masuk)->format('H:i') }}
+                    @if($trx->jam_keluar)
+                        → {{ \Carbon\Carbon::parse($trx->jam_keluar)->format('H:i') }}
+                    @else
+                        → sekarang
+                    @endif
+                </span>
+                <span class="trx-money {{ $trx->status == 1 ? '' : 'belum' }}">
+                    Rp {{ number_format($trx->tarif->tarif ?? 0, 0, ',', '.') }}
+                </span>
+            </div>
+        </div>
+    </div>
+    @endforeach
+@empty
+    <div class="empty-state">
+        <div class="ic">📋</div>
+        <div class="ttl">Belum ada transaksi</div>
+        <div class="sb">Transaksi akan muncul setelah ada kendaraan masuk</div>
+    </div>
+@endforelse
+
+@if($transaksis->hasPages())
+<div class="pagi">
+    @if($transaksis->onFirstPage())
+        <span class="dis"><i class="fa-solid fa-chevron-left"></i></span>
+    @else
+        <a href="{{ $transaksis->previousPageUrl() }}" class="lnk"><i class="fa-solid fa-chevron-left"></i></a>
+    @endif
+    <span class="cur">Hal {{ $transaksis->currentPage() }} / {{ $transaksis->lastPage() }}</span>
+    @if($transaksis->hasMorePages())
+        <a href="{{ $transaksis->nextPageUrl() }}" class="lnk"><i class="fa-solid fa-chevron-right"></i></a>
+    @else
+        <span class="dis"><i class="fa-solid fa-chevron-right"></i></span>
+    @endif
+</div>
+@endif
+
 {{-- Filter Modal --}}
-<dialog id="filterModal" class="rounded-2xl border-0 shadow-2xl p-0 w-full max-w-sm mx-auto" style="top:auto;bottom:0;margin-bottom:0;border-radius:20px 20px 0 0;">
-    <div class="bg-white rounded-t-2xl p-5">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-slate-800">Filter Transaksi</h3>
-            <button onclick="document.getElementById('filterModal').close()" class="text-slate-400 text-xl">✕</button>
+<dialog id="filterModal" class="filter-dialog">
+    <div style="padding:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <h3 style="font-size:1rem;font-weight:800;color:var(--charcoal);">Filter Transaksi</h3>
+            <button onclick="document.getElementById('filterModal').close()" style="border:none;background:var(--gray-100);border-radius:10px;width:32px;height:32px;cursor:pointer;color:var(--gray-500);">✕</button>
         </div>
         <form method="GET" action="{{ route('petugas.riwayat') }}">
-            <div class="mb-4">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal</label>
-                <input type="date" name="tgl" value="{{ request('tgl') }}"
-                    class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500">
+            <div class="form-group">
+                <label class="form-label">Tanggal</label>
+                <input type="date" name="tgl" value="{{ request('tgl') }}" class="form-control">
             </div>
-            <div class="mb-4">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
-                <select name="status" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500">
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-control">
                     <option value="">Semua Status</option>
                     <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Sedang Parkir</option>
                     <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Lunas</option>
                 </select>
             </div>
-            <div class="mb-4">
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Nomor Polisi</label>
+            <div class="form-group">
+                <label class="form-label">Nomor Polisi</label>
                 <input type="text" name="nomor_polisi" value="{{ request('nomor_polisi') }}"
-                    placeholder="Cth: B 1234 ABC"
-                    class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 uppercase">
+                       placeholder="cth: BA 1234 AB"
+                       class="form-control"
+                       style="text-transform:uppercase;font-family:'Courier New',monospace;">
             </div>
-            <div class="flex gap-3">
-                <a href="{{ route('petugas.riwayat') }}" class="flex-1 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm text-center">Reset</a>
-                <button type="submit" class="flex-1 py-3 bg-blue-700 text-white rounded-xl font-semibold text-sm">Terapkan</button>
+            <div style="display:flex;gap:8px;">
+                <a href="{{ route('petugas.riwayat') }}" class="btn btn-secondary" style="flex:1;">Reset</a>
+                <button type="submit" class="btn btn-primary" style="flex:1;">Terapkan</button>
             </div>
         </form>
     </div>
 </dialog>
 
 {{-- Detail Modal --}}
-<dialog id="detailModal" class="rounded-2xl border-0 shadow-2xl p-0 w-full max-w-sm mx-auto" style="top:auto;bottom:0;margin-bottom:0;border-radius:20px 20px 0 0;">
-    <div class="bg-white rounded-t-2xl p-5" id="detailContent">
-        <div class="text-center py-6"><div class="spinner mx-auto mb-2" style="width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin 0.8s linear infinite"></div><p class="text-sm text-slate-500">Memuat...</p></div>
+<dialog id="detailModal">
+    <div id="detailContent">
+        <div style="padding:40px;text-align:center;">
+            <div class="spinner" style="margin:0 auto 10px;"></div>
+            <p style="font-size:.85rem;color:var(--gray-500);">Memuat...</p>
+        </div>
     </div>
 </dialog>
 @endsection
 
 @push('scripts')
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 <script>
 async function showDetail(id) {
     document.getElementById('detailModal').showModal();
-    document.getElementById('detailContent').innerHTML = '<div class="text-center py-6"><div style="width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 10px"></div><p class="text-sm text-slate-500">Memuat detail...</p></div>';
+    document.getElementById('detailContent').innerHTML = `
+        <div style="padding:40px;text-align:center;">
+            <div class="spinner" style="margin:0 auto 10px;"></div>
+            <p style="font-size:.85rem;color:var(--gray-500);">Memuat detail...</p>
+        </div>`;
 
     try {
         const res = await fetch(`{{ url('/petugas/checkout') }}/${id}`, {
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         });
         const d = await res.json();
         if (!d.transaksi) throw new Error();
         const t = d.transaksi;
+        const statusBadge = t.status == 1
+            ? '<span class="badge badge-success">LUNAS</span>'
+            : '<span class="badge badge-warning">PARKIR</span>';
+
         document.getElementById('detailContent').innerHTML = `
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-slate-800">Detail Transaksi</h3>
-                <button onclick="document.getElementById('detailModal').close()" class="text-slate-400 text-xl">✕</button>
+            <div class="detail-head">
+                <h3>Detail Transaksi</h3>
+                <button onclick="document.getElementById('detailModal').close()" style="border:none;background:var(--gray-100);border-radius:10px;width:32px;height:32px;cursor:pointer;color:var(--gray-500);">✕</button>
             </div>
-            <div class="bg-slate-50 rounded-xl p-4 mb-4">
-                <div class="text-center mb-3">
-                    <span style="font-family:monospace;font-size:1.4rem;font-weight:800;color:#1e3a5f;letter-spacing:2px">${t.nomor_polisi}</span>
+            <div class="detail-body">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span style="font-size:.72rem;color:var(--gray-500);font-weight:600;">No. Ref: <b style="color:var(--charcoal);">${t.nomor_referensi || '-'}</b></span>
+                    ${statusBadge}
                 </div>
-                <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div><p class="text-slate-400 text-xs">Lokasi</p><p class="font-semibold">${t.lokasi}</p></div>
-                    <div><p class="text-slate-400 text-xs">Tarif</p><p class="font-semibold">${t.tarif_nama}</p></div>
-                    <div><p class="text-slate-400 text-xs">Jam Masuk</p><p class="font-semibold">${t.jam_masuk}</p></div>
-                    <div><p class="text-slate-400 text-xs">Jam Keluar</p><p class="font-semibold">${t.jam_keluar || '-'}</p></div>
-                    <div><p class="text-slate-400 text-xs">Durasi</p><p class="font-semibold text-orange-600">${t.durasi || '-'}</p></div>
-                    <div><p class="text-slate-400 text-xs">Status</p><p class="font-semibold ${t.status == 1 ? 'text-green-600' : 'text-orange-600'}">${t.status == 1 ? '✅ Lunas' : '🟡 Parkir'}</p></div>
+
+                <div class="detail-plate-bx">
+                    <div class="lbl">Plat Nomor</div>
+                    <div class="val">${t.nomor_polisi}</div>
                 </div>
-                <div class="mt-3 pt-3 border-t border-slate-200 flex justify-between">
-                    <span class="text-slate-500 text-sm">Total Bayar</span>
-                    <span class="font-bold text-green-700">Rp ${Number(t.tarif_harga).toLocaleString('id-ID')}</span>
+
+                <div class="detail-grid">
+                    <div class="it"><div class="l">📍 Lokasi</div><div class="v">${t.lokasi}</div></div>
+                    <div class="it"><div class="l">🏷️ Tarif</div><div class="v">${t.tarif_nama}</div></div>
+                    <div class="it"><div class="l">🕐 Jam Masuk</div><div class="v">${t.jam_masuk}</div></div>
+                    <div class="it"><div class="l">🕗 Jam Keluar</div><div class="v">${t.jam_keluar || '-'}</div></div>
+                    <div class="it" style="grid-column:1/-1;"><div class="l">⏱ Durasi</div><div class="v" style="color:var(--warning);">${t.durasi || '-'}</div></div>
+                    ${t.metode_nama ? `<div class="it" style="grid-column:1/-1;"><div class="l">💳 Metode Bayar</div><div class="v">${t.metode_nama}</div></div>` : ''}
                 </div>
-            </div>
-            ${t.status == 0 ? `<a href="{{ url('/petugas/scan-checkout') }}" class="block w-full py-3 bg-blue-700 text-white text-center rounded-xl font-bold text-sm">Checkout Kendaraan Ini</a>` : ''}
-            <button onclick="document.getElementById('detailModal').close()" class="block w-full py-3 mt-2 border border-slate-200 text-slate-600 text-center rounded-xl font-semibold text-sm">Tutup</button>`;
+
+                <div class="detail-total">
+                    <span class="l">Total Biaya</span>
+                    <span class="v">Rp ${Number(t.tarif_harga).toLocaleString('id-ID')}</span>
+                </div>
+
+                ${t.status == 0
+                    ? `<a href="{{ url('/petugas/scan-checkout') }}?plate=${encodeURIComponent(t.nomor_polisi)}" class="btn btn-success btn-full" style="padding:13px;"><i class="fa-solid fa-circle-check"></i> Checkout Kendaraan</a>`
+                    : ''}
+                <button onclick="document.getElementById('detailModal').close()" class="btn btn-secondary btn-full" style="margin-top:8px;">Tutup</button>
+            </div>`;
     } catch(e) {
-        document.getElementById('detailContent').innerHTML = '<p class="text-center text-slate-500 py-4">Gagal memuat detail</p>';
+        document.getElementById('detailContent').innerHTML = `
+            <div style="padding:40px;text-align:center;">
+                <div style="font-size:2.5rem;">⚠️</div>
+                <p style="font-size:.85rem;color:var(--gray-500);margin-top:10px;">Gagal memuat detail</p>
+                <button onclick="document.getElementById('detailModal').close()" class="btn btn-secondary" style="margin-top:14px;">Tutup</button>
+            </div>`;
     }
 }
 </script>

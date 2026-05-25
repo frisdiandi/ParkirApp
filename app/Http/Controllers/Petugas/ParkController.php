@@ -58,20 +58,30 @@ class ParkController extends Controller
             'id_lokasi'    => 'required|exists:lokasi,id',
         ]);
 
-        $petugas = Auth::user()->petugas;
+        $petugas      = Auth::user()->petugas;
+        $nomorPolisi  = strtoupper(trim($request->nomor_polisi));
+
+        // Cek apakah nomor polisi yang sama masih aktif parkir
+        $aktif = Transaksi::where('nomor_polisi', $nomorPolisi)
+                    ->where('status', 0)->exists();
+        if ($aktif) {
+            return back()->withErrors(['nomor_polisi' => 'Kendaraan dengan nomor polisi ini masih parkir.'])
+                         ->withInput();
+        }
 
         Transaksi::create([
-            'nomor_referensi'      => Transaksi::generateNomorReferensi(),
+            'reference_number'     => Transaksi::generateNomorReferensi(),
+            'billing_number'       => Transaksi::generateBillingNumber(),
             'id_petugas'           => $petugas->id,
             'id_lokasi'            => $request->id_lokasi,
             'tgl'                  => Carbon::today(),
             'id_tarif'             => $request->id_tarif,
-            'nomor_polisi'         => strtoupper(trim($request->nomor_polisi)),
+            'nomor_polisi'         => $nomorPolisi,
             'jam_masuk'            => Carbon::now()->format('H:i:s'),
             'status'               => 0,
         ]);
 
-        return redirect()->route('petugas.dashboard')->with('success', 'Kendaraan berhasil masuk!');
+        return redirect()->route('petugas.dashboard')->with('success', 'Kendaraan ' . $nomorPolisi . ' berhasil masuk!');
     }
 
     public function riwayat(Request $request)
@@ -85,17 +95,19 @@ class ParkController extends Controller
             $query->whereDate('tgl', $request->tgl);
         }
 
-        if ($request->filled('status')) {
+        if ($request->filled('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
 
         if ($request->filled('nomor_polisi')) {
-            $query->where('nomor_polisi', 'like', '%' . $request->nomor_polisi . '%');
+            $query->where('nomor_polisi', 'like', '%' . strtoupper($request->nomor_polisi) . '%');
         }
 
         $transaksis = $query->latest()->paginate(15)->withQueryString();
 
-        $totalTrx   = $query->toBase()->getCountForPagination();
+        $totalTrx   = Transaksi::where('id_petugas', $petugas->id)
+                        ->when($request->filled('tgl'), fn($q) => $q->whereDate('tgl', $request->tgl))
+                        ->count();
         $totalLunas = Transaksi::where('id_petugas', $petugas->id)
                         ->when($request->filled('tgl'), fn($q) => $q->whereDate('tgl', $request->tgl))
                         ->where('status', 1)->count();
@@ -116,6 +128,10 @@ class ParkController extends Controller
         $petugas      = Auth::user()->petugas;
         $nomor_polisi = strtoupper(trim($request->nomor_polisi ?? $request->q ?? ''));
 
+        if ($nomor_polisi === '') {
+            return response()->json(['found' => false, 'message' => 'Nomor polisi kosong']);
+        }
+
         $transaksi = Transaksi::with(['tarif', 'lokasi'])
                     ->where('id_petugas', $petugas->id)
                     ->where('status', 0)
@@ -123,29 +139,29 @@ class ParkController extends Controller
                     ->latest()->first();
 
         if (!$transaksi) {
-            return response()->json(['found' => false]);
+            return response()->json(['found' => false, 'message' => 'Transaksi aktif tidak ditemukan']);
         }
 
         $jamMasuk = Carbon::parse($transaksi->tgl->format('Y-m-d') . ' ' . $transaksi->jam_masuk);
-        $durasi   = $jamMasuk->diffForHumans(now(), true);
+        $durasi   = $jamMasuk->diffForHumans(now(), ['parts' => 2, 'short' => true, 'syntax' => Carbon::DIFF_ABSOLUTE]);
 
         $metode = MetodePembayaran::all();
 
         return response()->json([
             'found' => true,
             'transaksi' => [
-                'id'             => $transaksi->id,
-                'nomor_referensi'=> $transaksi->nomor_referensi,
-                'nomor_polisi'   => $transaksi->nomor_polisi,
-                'lokasi'         => $transaksi->lokasi->nama ?? '-',
-                'tarif_nama'     => $transaksi->tarif->nama ?? '-',
-                'tarif_harga'    => $transaksi->tarif->tarif ?? 0,
-                'jam_masuk'      => $transaksi->jam_masuk,
-                'durasi'         => $durasi,
-                'status'         => $transaksi->status,
-                'jam_keluar'     => $transaksi->jam_keluar,
+                'id'              => $transaksi->id,
+                'nomor_referensi' => $transaksi->reference_number,
+                'nomor_polisi'    => $transaksi->nomor_polisi,
+                'lokasi'          => $transaksi->lokasi->nama ?? '-',
+                'tarif_nama'      => $transaksi->tarif->nama ?? '-',
+                'tarif_harga'     => (float) ($transaksi->tarif->tarif ?? 0),
+                'jam_masuk'       => substr($transaksi->jam_masuk, 0, 5),
+                'durasi'          => $durasi,
+                'status'          => $transaksi->status,
+                'jam_keluar'      => $transaksi->jam_keluar ? substr($transaksi->jam_keluar, 0, 5) : null,
             ],
-            'metode' => $metode,
+            'metode' => $metode->map(fn($m) => ['id' => $m->id, 'nama' => $m->nama])->values(),
         ]);
     }
 
@@ -156,22 +172,25 @@ class ParkController extends Controller
         if ($request->wantsJson()) {
             $jamMasuk = Carbon::parse($transaksi->tgl->format('Y-m-d') . ' ' . $transaksi->jam_masuk);
             $durasi   = $transaksi->jam_keluar
-                ? Carbon::parse($transaksi->tgl->format('Y-m-d') . ' ' . $transaksi->jam_masuk)
-                         ->diffForHumans(Carbon::parse($transaksi->tgl->format('Y-m-d') . ' ' . $transaksi->jam_keluar), true)
-                : $jamMasuk->diffForHumans(now(), true);
+                ? $jamMasuk->diffForHumans(
+                    Carbon::parse($transaksi->tgl->format('Y-m-d') . ' ' . $transaksi->jam_keluar),
+                    ['parts' => 2, 'short' => true, 'syntax' => Carbon::DIFF_ABSOLUTE]
+                  )
+                : $jamMasuk->diffForHumans(now(), ['parts' => 2, 'short' => true, 'syntax' => Carbon::DIFF_ABSOLUTE]);
 
             return response()->json([
                 'transaksi' => [
-                    'id'             => $transaksi->id,
-                    'nomor_referensi'=> $transaksi->nomor_referensi,
-                    'nomor_polisi'   => $transaksi->nomor_polisi,
-                    'lokasi'         => $transaksi->lokasi->nama ?? '-',
-                    'tarif_nama'     => $transaksi->tarif->nama ?? '-',
-                    'tarif_harga'    => $transaksi->tarif->tarif ?? 0,
-                    'jam_masuk'      => $transaksi->jam_masuk,
-                    'jam_keluar'     => $transaksi->jam_keluar,
-                    'durasi'         => $durasi,
-                    'status'         => $transaksi->status,
+                    'id'              => $transaksi->id,
+                    'nomor_referensi' => $transaksi->reference_number,
+                    'nomor_polisi'    => $transaksi->nomor_polisi,
+                    'lokasi'          => $transaksi->lokasi->nama ?? '-',
+                    'tarif_nama'      => $transaksi->tarif->nama ?? '-',
+                    'tarif_harga'     => (float) ($transaksi->tarif->tarif ?? 0),
+                    'jam_masuk'       => substr($transaksi->jam_masuk, 0, 5),
+                    'jam_keluar'      => $transaksi->jam_keluar ? substr($transaksi->jam_keluar, 0, 5) : null,
+                    'durasi'          => $durasi,
+                    'status'          => $transaksi->status,
+                    'metode_nama'     => $transaksi->metodePembayaran->nama ?? null,
                 ],
             ]);
         }
@@ -184,23 +203,35 @@ class ParkController extends Controller
     {
         $request->validate(['id_metode_pembayaran' => 'required|exists:metode_pembayaran,id']);
 
+        if ($transaksi->status == 1) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Transaksi sudah lunas']);
+            }
+            return back()->withErrors(['msg' => 'Transaksi sudah lunas']);
+        }
+
         $jamMasuk  = Carbon::parse($transaksi->tgl->format('Y-m-d') . ' ' . $transaksi->jam_masuk);
         $jamKeluar = Carbon::now();
-        $durasi    = $jamMasuk->diffForHumans($jamKeluar, true);
+        $durasi    = $jamMasuk->diffForHumans($jamKeluar, ['parts' => 2, 'short' => true, 'syntax' => Carbon::DIFF_ABSOLUTE]);
 
         $transaksi->update([
             'jam_keluar'           => $jamKeluar->format('H:i:s'),
             'id_metode_pembayaran' => $request->id_metode_pembayaran,
+            'amount'               => (string) ($transaksi->tarif->tarif ?? 0),
             'status'               => 1,
         ]);
+
+        $metode = MetodePembayaran::find($request->id_metode_pembayaran);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success'          => true,
                 'message'          => 'Checkout berhasil',
-                'nomor_referensi'  => $transaksi->nomor_referensi,
+                'nomor_referensi'  => $transaksi->reference_number,
+                'nomor_polisi'     => $transaksi->nomor_polisi,
                 'durasi'           => $durasi,
-                'total'            => $transaksi->tarif->tarif ?? 0,
+                'metode_nama'      => $metode->nama ?? '-',
+                'total'            => (float) ($transaksi->tarif->tarif ?? 0),
             ]);
         }
 
@@ -212,16 +243,24 @@ class ParkController extends Controller
     {
         $user          = Auth::user();
         $petugas       = $user->petugas;
-        $lokasiIds     = is_array($petugas->id_lokasi) ? $petugas->id_lokasi : [];
+        $lokasiIds     = ($petugas && is_array($petugas->id_lokasi)) ? $petugas->id_lokasi : [];
         $lokasiPetugas = count($lokasiIds) ? Lokasi::whereIn('id', $lokasiIds)->get() : collect();
         $today         = Carbon::today();
 
-        $statHariIni = [
+        $statHariIni = $petugas ? [
             'total'  => Transaksi::where('id_petugas', $petugas->id)->whereDate('tgl', $today)->count(),
             'lunas'  => Transaksi::where('id_petugas', $petugas->id)->whereDate('tgl', $today)->where('status', 1)->count(),
             'parkir' => Transaksi::where('id_petugas', $petugas->id)->whereDate('tgl', $today)->where('status', 0)->count(),
-        ];
+        ] : ['total' => 0, 'lunas' => 0, 'parkir' => 0];
 
-        return view('petugas.profile.index', compact('petugas', 'lokasiPetugas', 'statHariIni'));
+        $statTotal = $petugas ? [
+            'total'     => Transaksi::where('id_petugas', $petugas->id)->count(),
+            'pendapatan'=> (float) Transaksi::where('id_petugas', $petugas->id)
+                                ->where('status', 1)
+                                ->join('tarif', 'transaksi.id_tarif', '=', 'tarif.id')
+                                ->sum('tarif.tarif'),
+        ] : ['total' => 0, 'pendapatan' => 0];
+
+        return view('petugas.profile.index', compact('petugas', 'lokasiPetugas', 'statHariIni', 'statTotal'));
     }
 }

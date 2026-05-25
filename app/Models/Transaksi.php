@@ -9,7 +9,6 @@ class Transaksi extends Model
     protected $table = 'transaksi';
 
     protected $fillable = [
-        'nomor_referensi',
         'id_petugas',
         'id_lokasi',
         'tgl',
@@ -19,7 +18,6 @@ class Transaksi extends Model
         'jam_keluar',
         'id_metode_pembayaran',
         'status',
-        // Field baru dari update status
         'outlet_id',
         'billing_number',
         'amount',
@@ -27,6 +25,8 @@ class Transaksi extends Model
         'pjsp',
         'customer_name',
     ];
+
+    protected $appends = ['nomor_referensi'];
 
     protected $casts = [
         'tgl'    => 'date',
@@ -67,6 +67,11 @@ class Transaksi extends Model
         return $this->status === 1 ? 'Lunas' : 'Belum Bayar';
     }
 
+    public function getNomorReferensiAttribute(): ?string
+    {
+        return $this->reference_number;
+    }
+
     public function getDurasiAttribute(): string
     {
         if (!$this->jam_keluar) return '-';
@@ -84,8 +89,13 @@ class Transaksi extends Model
     {
         do {
             $kode = 'PRK-' . strtoupper(substr(md5(uniqid()), 0, 8));
-        } while (static::where('nomor_referensi', $kode)->exists());
+        } while (static::where('reference_number', $kode)->exists());
 
         return $kode;
+    }
+
+    public static function generateBillingNumber(): string
+    {
+        return 'BIL-' . strtoupper(substr(md5(uniqid('', true)), 0, 10));
     }
 }
