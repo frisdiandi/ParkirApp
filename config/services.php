@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'ocr_space' => [
+        // Daftar gratis API key di: https://ocr.space/ocrapi/freekey (25.000 req/bulan)
+        // 'helloworld' adalah demo key publik dengan limit 1 req / 10 detik
+        'key'      => env('OCR_SPACE_API_KEY', 'helloworld'),
+        'endpoint' => env('OCR_SPACE_ENDPOINT', 'https://api.ocr.space/parse/image'),
+        'language' => env('OCR_SPACE_LANGUAGE', 'eng'),
+        'engine'   => (int) env('OCR_SPACE_ENGINE', 2),
+    ],
+
 ];

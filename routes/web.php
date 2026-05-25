@@ -42,6 +42,7 @@ Route::prefix('petugas')->middleware(['auth', 'level:2'])->name('petugas.')->gro
     Route::get('/checkout/{transaksi}', [ParkController::class, 'detailCheckout'])->name('checkout');
     Route::post('/checkout/{transaksi}', [ParkController::class, 'prosesCheckout'])->name('proses-checkout');
     Route::get('/profile', [ParkController::class, 'profile'])->name('profile');
+    Route::post('/scan-plate', [ParkController::class, 'scanPlate'])->name('scan-plate');
 });
 
 // PWA manifest & service worker

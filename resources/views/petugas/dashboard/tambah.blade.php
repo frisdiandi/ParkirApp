@@ -205,7 +205,6 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
 <script>
 let stream = null;
 let useFront = false;
@@ -251,33 +250,39 @@ async function toggleTorch() {
     } catch (e) { alert('Senter tidak didukung perangkat ini'); }
 }
 
-// Pre-process gambar untuk OCR: greyscale + threshold
-function preprocessForOcr(srcCanvas) {
-    const ctx = srcCanvas.getContext('2d');
-    const img = ctx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
-    const d = img.data;
-    // greyscale + contrast threshold
-    for (let i = 0; i < d.length; i += 4) {
-        const g = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114);
-        const v = g > 130 ? 255 : 0;
-        d[i] = d[i+1] = d[i+2] = v;
-    }
-    ctx.putImageData(img, 0, 0);
-    return srcCanvas;
-}
-
-// Crop ke area scan frame (78% lebar, 38% tinggi tengah)
-function cropToScanArea(srcCanvas) {
+// Crop ke area scan frame + upscale 2x untuk akurasi lebih baik
+function cropAndUpscale(srcCanvas) {
     const w = srcCanvas.width, h = srcCanvas.height;
-    const cw = Math.floor(w * 0.78);
-    const ch = Math.floor(h * 0.38);
-    const cx = Math.floor((w - cw) / 2);
-    const cy = Math.floor((h - ch) / 2);
+    const cw = Math.floor(w * 0.78), ch = Math.floor(h * 0.38);
+    const cx = Math.floor((w - cw) / 2), cy = Math.floor((h - ch) / 2);
 
     const out = document.createElement('canvas');
-    out.width = cw; out.height = ch;
-    out.getContext('2d').drawImage(srcCanvas, cx, cy, cw, ch, 0, 0, cw, ch);
+    out.width = cw * 2; out.height = ch * 2;
+    const ctx = out.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(srcCanvas, cx, cy, cw, ch, 0, 0, out.width, out.height);
     return out;
+}
+
+// Kirim ke server-side OCR (OCR.space cloud)
+async function recognizePlate(canvasEl) {
+    const dataUrl = canvasEl.toDataURL('image/jpeg', 0.85);
+
+    const res = await fetch('{{ route('petugas.scan-plate') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ image: dataUrl })
+    });
+
+    if (!res.ok) throw new Error('OCR HTTP ' + res.status);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'OCR error');
+    return { plate: data.plate, raw: data.raw };
 }
 
 async function captureFrame() {
@@ -287,40 +292,29 @@ async function captureFrame() {
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
 
-    showProc('Membaca plat nomor...');
+    showProc('Mengirim ke server OCR...');
 
     try {
-        const cropped = cropToScanArea(canvas);
-        const prepped = preprocessForOcr(cropped);
-
-        const { data: { text } } = await Tesseract.recognize(prepped, 'eng', {
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-            tessedit_pageseg_mode:   '7'  // single line
-        });
-
-        // Bersihkan dan cari pola plat Indonesia: 1-2 huruf, spasi, 1-4 angka, spasi, 1-3 huruf
-        const cleaned = text.replace(/[^A-Z0-9 ]/gi, ' ').replace(/\s+/g, ' ').trim().toUpperCase();
-        const match   = cleaned.match(/[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{0,3}/);
-
-        let plate = '';
-        if (match) {
-            plate = match[0].replace(/([A-Z]+)(\d+)([A-Z]*)/, '$1 $2 $3').replace(/\s+/g, ' ').trim();
-        } else if (cleaned.length >= 4) {
-            // fallback: ambil sebanyak mungkin huruf/angka
-            plate = cleaned.substring(0, 12).trim();
-        }
-
+        const prepped = cropAndUpscale(canvas);
+        const { plate, raw } = await recognizePlate(prepped);
         hideProc();
 
         if (plate) {
             setPlate(plate);
         } else {
-            alert('Plat nomor tidak terbaca. Coba lagi atau ketik manual.');
+            const guess = (raw || '').replace(/[^A-Z0-9 ]/gi, ' ').replace(/\s+/g, ' ').toUpperCase().trim();
+            if (guess) {
+                if (confirm('Plat nomor tidak dikenali. Teks terbaca:\n\n"' + guess + '"\n\nGunakan ini?')) {
+                    setPlate(guess);
+                }
+            } else {
+                alert('Plat nomor tidak terbaca.\nPastikan plat tertutup di dalam kotak & cukup terang.\nAtau ketik manual.');
+            }
         }
     } catch (e) {
         console.error(e);
         hideProc();
-        alert('Gagal memproses. Silakan ketik manual.');
+        alert('Gagal scan: ' + e.message + '\nSilakan ketik manual.');
     }
 }
 

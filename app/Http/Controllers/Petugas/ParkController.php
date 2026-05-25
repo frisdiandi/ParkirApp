@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\{Transaksi, Tarif, Lokasi, MetodePembayaran};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 
 class ParkController extends Controller
@@ -237,6 +238,120 @@ class ParkController extends Controller
 
         return redirect()->route('petugas.dashboard')
             ->with('success', 'Checkout berhasil! Kendaraan ' . $transaksi->nomor_polisi . ' telah keluar.');
+    }
+
+    /**
+     * Proxy OCR ke OCR.space. Menerima image base64 dari client,
+     * mengembalikan plat nomor terdeteksi + raw text.
+     * Tujuan: sembunyikan API key & jamin CORS.
+     */
+    public function scanPlate(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|string', // data URL base64
+        ]);
+
+        $img = $request->input('image');
+        // Pastikan format data URL valid
+        if (!preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,/i', $img)) {
+            return response()->json(['success' => false, 'message' => 'Format gambar tidak valid'], 422);
+        }
+
+        $apiKey   = config('services.ocr_space.key');
+        $endpoint = config('services.ocr_space.endpoint');
+        $lang     = config('services.ocr_space.language', 'eng');
+        $engine   = (int) config('services.ocr_space.engine', 2);
+
+        try {
+            $resp = Http::timeout(20)
+                ->asForm()
+                ->withHeaders(['apikey' => $apiKey])
+                ->post($endpoint, [
+                    'language'           => $lang,
+                    'OCREngine'          => $engine,
+                    'scale'              => 'true',
+                    'isTable'            => 'false',
+                    'isOverlayRequired'  => 'false',
+                    'detectOrientation'  => 'true',
+                    'base64Image'        => $img,
+                ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghubungi server OCR: ' . $e->getMessage(),
+            ], 502);
+        }
+
+        if (!$resp->successful()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'OCR server merespons error (' . $resp->status() . ')',
+            ], 502);
+        }
+
+        $data = $resp->json();
+
+        if (($data['IsErroredOnProcessing'] ?? false) === true) {
+            $err = $data['ErrorMessage'] ?? ['OCR error'];
+            return response()->json([
+                'success' => false,
+                'message' => is_array($err) ? implode('; ', $err) : (string) $err,
+            ], 502);
+        }
+
+        $rawText = '';
+        foreach ($data['ParsedResults'] ?? [] as $r) {
+            $rawText .= ($r['ParsedText'] ?? '') . "\n";
+        }
+
+        $plate = $this->extractPlateFromText($rawText);
+
+        return response()->json([
+            'success'  => true,
+            'plate'    => $plate,
+            'raw'      => trim($rawText),
+        ]);
+    }
+
+    /**
+     * Cari pola plat Indonesia di dalam teks OCR.
+     * Format umum: [1-2 huruf][spasi][1-4 digit][spasi][1-3 huruf].
+     */
+    protected function extractPlateFromText(string $text): ?string
+    {
+        $cleaned = strtoupper(preg_replace('/[^A-Z0-9 \n]/i', ' ', $text));
+
+        // Cari pola yang paling cocok di seluruh baris (mungkin berantakan)
+        $candidates = [];
+        foreach (preg_split('/\s+/', $cleaned) as $token) {
+            if ($token === '') continue;
+            $candidates[] = $token;
+        }
+        // Gabungkan juga seluruh teks tanpa spasi untuk pencarian regex luas
+        $flat = preg_replace('/\s+/', '', $cleaned);
+
+        // Coba regex full plate dulu di teks dengan spasi
+        if (preg_match_all('/\b([A-Z]{1,2})\s?(\d{1,4})\s?([A-Z]{1,3})\b/', $cleaned, $matches, PREG_SET_ORDER)) {
+            // Pilih yang panjang totalnya paling masuk akal (5-10 char)
+            $best = null;
+            foreach ($matches as $m) {
+                $plate = "{$m[1]} {$m[2]} {$m[3]}";
+                $len   = strlen(str_replace(' ', '', $plate));
+                if ($len >= 5 && $len <= 10) {
+                    if (!$best || strlen(str_replace(' ', '', $best)) < $len) {
+                        $best = $plate;
+                    }
+                }
+            }
+            if ($best) return $best;
+        }
+
+        // Fallback: regex di string flat
+        if (preg_match('/([A-Z]{1,2})(\d{1,4})([A-Z]{1,3})/', $flat, $m)) {
+            return "{$m[1]} {$m[2]} {$m[3]}";
+        }
+
+        return null;
     }
 
     public function profile()
