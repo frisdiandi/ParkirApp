@@ -30,9 +30,10 @@
 
 /* Scan area */
 .scan-wrapper {
-    position: relative; background: #000; border-radius: 16px;
-    overflow: hidden; aspect-ratio: 4/3; max-height: 280px;
-    margin-bottom: 12px;
+    position: relative; background: #000;
+    border-radius: 16px;
+    overflow: hidden; aspect-ratio: 4/3; max-height: 340px;
+    width: 100%; margin-bottom: 14px;
 }
 #videoScan { width: 100%; height: 100%; object-fit: cover; display: block; }
 .scan-overlay {
@@ -160,34 +161,154 @@
 .metode-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--gray-300); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .metode-btn.selected .metode-check { border-color: var(--blue-light); background: var(--blue-light); color: #fff; }
 
-/* QRIS modal */
-.qris-card {
-    background: var(--white); border-radius: 16px; padding: 22px 18px;
-    text-align: center;
+/* ── Confirm dialog ──────────────────────── */
+#confirmDialog {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0; border: none; padding: 0;
+    border-radius: 22px; width: calc(100% - 32px); max-width: 360px;
+    box-shadow: 0 20px 60px rgba(15,42,94,.22);
+    overflow: hidden;
 }
-.qris-card .qhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.qris-brand {
+#confirmDialog::backdrop {
+    background: rgba(10,20,50,.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+.cdlg-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.7rem; margin: 0 auto 14px;
+}
+.cdlg-plate {
+    background: #0f2a5e; border-radius: 12px;
+    padding: 10px 16px; text-align: center;
+    margin-bottom: 14px;
+}
+.cdlg-plate .lbl { font-size: .62rem; color: rgba(255,255,255,.6); font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }
+.cdlg-plate .val { font-family: 'Courier New', monospace; font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: 2px; margin-top: 4px; }
+.cdlg-rows { background: #f8fafc; border-radius: 12px; overflow: hidden; margin-bottom: 14px; }
+.cdlg-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 14px; font-size: .82rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+.cdlg-row:last-child { border-bottom: none; }
+.cdlg-row .rl { color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+.cdlg-row .rv { font-weight: 700; color: #1e293b; text-align: right; max-width: 55%; }
+.cdlg-total {
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    border: 1.5px solid #a7f3d0;
+    border-radius: 12px; padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+}
+.cdlg-total .tl { font-size: .78rem; font-weight: 700; color: #047857; }
+.cdlg-total .tv { font-size: 1.25rem; font-weight: 800; color: #065f46; }
+.cdlg-actions { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; }
+.cdlg-actions .btn { padding: 13px 8px; font-size: .88rem; border-radius: 13px; }
+
+/* ── QRIS Dialog ─────────────────────────── */
+#qrisDialog {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0; border: none; padding: 0;
+    border-radius: 22px; width: calc(100% - 32px); max-width: 360px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(15,42,94,.22);
+}
+#qrisDialog::backdrop {
+    background: rgba(10,20,50,.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+#qrisDialog::-webkit-scrollbar { width: 0; }
+
+.qdlg-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 16px 10px;
+}
+.qdlg-brand {
     display: inline-flex; align-items: center; gap: 7px;
-    color: var(--white); background: linear-gradient(135deg, #cd1f2c, #781923);
-    padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: .82rem; letter-spacing: .5px;
+    background: linear-gradient(135deg, #cd1f2c, #8b0000);
+    color: #fff; padding: 6px 13px; border-radius: 8px;
+    font-weight: 800; font-size: .82rem; letter-spacing: .5px;
 }
-.qris-img {
-    width: 200px; height: 200px; margin: 8px auto;
-    background: #fff; border: 4px solid var(--navy); border-radius: 12px;
-    padding: 8px; display: flex; align-items: center; justify-content: center;
+.qdlg-close {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: #f1f5f9; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem; color: #64748b;
 }
-.qris-img svg { width: 100%; height: 100%; }
+
 .qris-amount {
-    background: var(--gray-50); border-radius: 12px;
-    padding: 10px 16px; margin: 14px 0 8px;
+    background: #f8fafc; border-radius: 12px;
+    padding: 10px 16px; margin: 0 16px 12px;
+    display: flex; justify-content: space-between; align-items: center;
 }
-.qris-amount .l { font-size: .68rem; color: var(--gray-500); font-weight: 700; text-transform: uppercase; }
-.qris-amount .v { font-size: 1.5rem; font-weight: 800; color: var(--navy); margin-top: 4px; }
+.qris-amount .l { font-size: .7rem; color: #64748b; font-weight: 600; }
+.qris-amount .v { font-size: 1.3rem; font-weight: 800; color: #0f2a5e; }
+
+.qris-img {
+    width: 200px; height: 200px; margin: 0 auto 12px;
+    background: #fff; border: 3px solid #0f2a5e; border-radius: 14px;
+    padding: 6px; display: flex; align-items: center; justify-content: center;
+    position: relative;
+}
+.qris-img canvas { width: 100% !important; height: 100% !important; display: block; }
+.qris-img.expired::after {
+    content: 'KEDALUWARSA';
+    position: absolute; inset: 0; background: rgba(15,42,94,.9);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; letter-spacing: 2px; font-size: .9rem;
+    border-radius: 11px;
+}
+.qris-loader {
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 10px; color: #94a3b8; padding: 10px;
+    font-size: .78rem; text-align: center;
+}
+.qris-error-inner {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px; padding: 6px;
+}
+.qris-error-inner i { font-size: 2rem; color: #ef4444; }
+.qris-error-inner p { font-size: .7rem; color: #ef4444; text-align: center; line-height: 1.4; }
+
+.qris-timer {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: 0 16px 10px;
+    padding: 9px 16px;
+    background: #fef3c7; color: #92400e;
+    border-radius: 10px; font-weight: 800;
+    font-family: 'Courier New', monospace; font-size: 1rem;
+    border: 1.5px solid #fcd34d;
+}
+.qris-timer.danger { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.qris-timer i { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+.qris-info-row {
+    display: flex; justify-content: space-between;
+    font-size: .76rem; color: #94a3b8; padding: 4px 18px;
+}
+.qris-info-row b { color: #1e293b; font-family: 'Courier New', monospace; font-size: .75rem; }
+
+.qris-status {
+    margin: 8px 16px 0;
+    padding: 10px 12px;
+    background: #eff6ff; color: #2563eb;
+    border-radius: 10px; font-size: .8rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.qris-status i { animation: spin 1.2s linear infinite; }
+
+.qdlg-footer { padding: 12px 16px 18px; display: flex; flex-direction: column; gap: 8px; }
 
 /* Success state */
-.success-wrap {
-    text-align: center; padding: 30px 16px;
-}
+.success-wrap { text-align: center; padding: 30px 16px; }
 .success-icon {
     width: 90px; height: 90px; border-radius: 50%;
     background: linear-gradient(135deg, var(--success), #059669); color: #fff;
@@ -293,46 +414,116 @@
 
 {{-- QRIS Dialog --}}
 <dialog id="qrisDialog">
-    <div class="qris-card">
-        <div class="qhead">
-            <div class="qris-brand">QRIS</div>
-            <button onclick="document.getElementById('qrisDialog').close()" style="border:none;background:var(--gray-100);border-radius:10px;width:32px;height:32px;cursor:pointer;color:var(--gray-500);">✕</button>
+
+    {{-- Header --}}
+    <div class="qdlg-head">
+        <div class="qdlg-brand"><i class="fa-solid fa-qrcode"></i> QRIS Bank Nagari</div>
+        <button class="qdlg-close" onclick="cancelQris()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    {{-- Amount --}}
+    <div class="qris-amount">
+        <span class="l">Total Pembayaran</span>
+        <span class="v" id="qrisAmount">Rp 0</span>
+    </div>
+
+    {{-- QR Image --}}
+    <div class="qris-img" id="qrisImg">
+        <div class="qris-loader">
+            <div class="spinner"></div>
+            <p>Menggenerate QR...</p>
         </div>
-        <p style="font-size:.78rem;color:var(--gray-500);margin-bottom:4px;">Scan QR Code di bawah ini</p>
-        <p style="font-size:.65rem;color:var(--warning);font-weight:700;">⚠ DEMO / DUMMY QR — Bukan transaksi nyata</p>
-        <div class="qris-img" id="qrisImg"></div>
-        <div class="qris-amount">
-            <div class="l">Total Pembayaran</div>
-            <div class="v" id="qrisAmount">Rp 0</div>
-        </div>
-        <button onclick="confirmQrisPaid()" class="btn btn-success btn-full" style="margin-top:6px;padding:13px;">
-            <i class="fa-solid fa-check"></i> Konfirmasi Sudah Dibayar
+    </div>
+
+    {{-- Timer --}}
+    <div class="qris-timer" id="qrisTimer">
+        <i class="fa-solid fa-clock"></i>
+        <span>Berlaku</span>
+        <span id="qrisTimerText" style="font-size:1.1rem;">05:00</span>
+    </div>
+
+    {{-- Info --}}
+    <div class="qris-info-row">
+        <span>Nomor Polisi</span><b id="qrisPlat">-</b>
+    </div>
+    <div class="qris-info-row" style="margin-bottom:8px;">
+        <span>Billing ID</span><b id="qrisBilling">-</b>
+    </div>
+
+    {{-- Status --}}
+    <div class="qris-status" id="qrisStatus">
+        <i class="fa-solid fa-spinner"></i>
+        <span>Menunggu pembayaran...</span>
+    </div>
+
+    {{-- Footer buttons --}}
+    <div class="qdlg-footer">
+        <button onclick="startQrisFlow()" id="qrisBtnRetry" class="btn btn-primary btn-full" style="display:none;">
+            <i class="fa-solid fa-rotate-right"></i> Generate Ulang
         </button>
-        <button onclick="document.getElementById('qrisDialog').close()" class="btn btn-secondary btn-full" style="margin-top:8px;">Batal</button>
+        <button onclick="cancelQris()" class="btn btn-secondary btn-full">
+            <i class="fa-solid fa-xmark"></i> Batalkan
+        </button>
     </div>
 </dialog>
 
 {{-- Confirm Dialog --}}
 <dialog id="confirmDialog">
-    <div style="padding:22px 20px;text-align:center;">
-        <div style="width:60px;height:60px;border-radius:50%;background:var(--warning-soft);color:var(--warning);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 14px;">
-            <i class="fa-solid fa-question"></i>
-        </div>
-        <h3 style="font-size:1.05rem;font-weight:800;color:var(--charcoal);margin-bottom:6px;">Konfirmasi Checkout</h3>
-        <p style="font-size:.85rem;color:var(--gray-500);margin-bottom:6px;" id="confirmText">Lanjutkan proses pembayaran?</p>
-        <div style="background:var(--gray-50);border-radius:12px;padding:10px 14px;margin:14px 0;">
-            <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px;">
-                <span style="color:var(--gray-500);">Metode</span>
-                <span style="font-weight:700;color:var(--charcoal);" id="confirmMetode">-</span>
+    <div style="padding:22px 18px 18px;">
+
+        {{-- Icon + judul --}}
+        <div style="text-align:center;margin-bottom:16px;">
+            <div class="cdlg-icon" id="cdlgIcon" style="background:#fef3c7;color:#d97706;">
+                <i class="fa-solid fa-receipt"></i>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:.82rem;">
-                <span style="color:var(--gray-500);">Total</span>
-                <span style="font-weight:800;color:var(--success);" id="confirmTotal">-</span>
+            <div style="font-size:1rem;font-weight:800;color:#1e293b;">Konfirmasi Pembayaran</div>
+            <div style="font-size:.76rem;color:#64748b;margin-top:3px;" id="confirmText">Pastikan data di bawah sudah benar</div>
+        </div>
+
+        {{-- Plat nomor --}}
+        <div class="cdlg-plate">
+            <div class="lbl">Nomor Polisi</div>
+            <div class="val" id="cdlgPlat">-</div>
+        </div>
+
+        {{-- Detail rows --}}
+        <div class="cdlg-rows">
+            <div class="cdlg-row">
+                <span class="rl"><i class="fa-solid fa-location-dot" style="color:#2563eb;"></i> Lokasi</span>
+                <span class="rv" id="cdlgLokasi">-</span>
+            </div>
+            <div class="cdlg-row">
+                <span class="rl"><i class="fa-solid fa-tag" style="color:#7c3aed;"></i> Tarif</span>
+                <span class="rv" id="cdlgTarif">-</span>
+            </div>
+            <div class="cdlg-row">
+                <span class="rl"><i class="fa-solid fa-clock" style="color:#d97706;"></i> Jam Masuk</span>
+                <span class="rv" id="cdlgJam">-</span>
+            </div>
+            <div class="cdlg-row">
+                <span class="rl"><i class="fa-solid fa-hourglass-half" style="color:#0891b2;"></i> Durasi</span>
+                <span class="rv" id="cdlgDurasi">-</span>
+            </div>
+            <div class="cdlg-row">
+                <span class="rl"><i class="fa-solid fa-wallet" style="color:#059669;"></i> Metode</span>
+                <span class="rv" style="font-weight:800;" id="confirmMetode">-</span>
             </div>
         </div>
-        <div style="display:flex;gap:8px;">
-            <button onclick="document.getElementById('confirmDialog').close()" class="btn btn-secondary" style="flex:1;">Batal</button>
-            <button onclick="afterConfirm()" class="btn btn-success" style="flex:1;" id="btnConfirmYa">Ya, Lanjutkan</button>
+
+        {{-- Total --}}
+        <div class="cdlg-total">
+            <span class="tl"><i class="fa-solid fa-circle-check"></i> Total Bayar</span>
+            <span class="tv" id="confirmTotal">-</span>
+        </div>
+
+        {{-- Tombol --}}
+        <div class="cdlg-actions">
+            <button onclick="document.getElementById('confirmDialog').close()" class="btn btn-secondary">
+                Batal
+            </button>
+            <button onclick="afterConfirm()" class="btn btn-success" id="btnConfirmYa">
+                <i class="fa-solid fa-circle-check"></i> Ya, Bayar Sekarang
+            </button>
         </div>
     </div>
 </dialog>
@@ -348,6 +539,7 @@ let selectedMetode = null;
 let selectedMetodeNama = '';
 let currentTrxId = null;
 let currentTotal = 0;
+let currentTrxData = null;
 
 const proc = document.getElementById('procOverlay');
 const procText = document.getElementById('procText');
@@ -483,8 +675,9 @@ async function cariTransaksi(plate) {
         if (data.found && data.transaksi) {
             renderTrxInfo(data.transaksi);
             renderMetode(data.metode);
-            currentTrxId = data.transaksi.id;
-            currentTotal = data.transaksi.tarif_harga;
+            currentTrxId   = data.transaksi.id;
+            currentTotal   = data.transaksi.tarif_harga;
+            currentTrxData = data.transaksi;
         } else {
             document.getElementById('notFoundSection').style.display = '';
         }
@@ -558,43 +751,211 @@ function pilihMetode(id, nama, btn) {
 function confirmCheckout() {
     if (!selectedMetode) { alert('Pilih metode pembayaran dahulu'); return; }
 
+    const isQris = selectedMetodeNama.toLowerCase().includes('qris');
+
+    // Isi icon sesuai metode
+    const iconEl = document.getElementById('cdlgIcon');
+    if (isQris) {
+        iconEl.style.background = '#dbeafe'; iconEl.style.color = '#2563eb';
+        iconEl.innerHTML = '<i class="fa-solid fa-qrcode"></i>';
+    } else {
+        iconEl.style.background = '#dcfce7'; iconEl.style.color = '#059669';
+        iconEl.innerHTML = '<i class="fa-solid fa-money-bill-wave"></i>';
+    }
+
+    // Isi detail dari currentTrxData
+    const t = currentTrxData || {};
+    document.getElementById('cdlgPlat').textContent    = t.nomor_polisi || '-';
+    document.getElementById('cdlgLokasi').textContent  = t.lokasi || '-';
+    document.getElementById('cdlgTarif').textContent   = t.tarif_nama || '-';
+    document.getElementById('cdlgJam').textContent     = t.jam_masuk || '-';
+    document.getElementById('cdlgDurasi').textContent  = t.durasi || '-';
     document.getElementById('confirmMetode').textContent = selectedMetodeNama;
-    document.getElementById('confirmTotal').textContent = 'Rp ' + Number(currentTotal).toLocaleString('id-ID');
-    document.getElementById('confirmText').textContent =
-        selectedMetodeNama.toLowerCase().includes('qris')
-            ? 'Tampilkan QR Code QRIS untuk pembayaran?'
-            : 'Pastikan pembayaran tunai sudah diterima.';
+    document.getElementById('confirmTotal').textContent  = 'Rp ' + Number(currentTotal).toLocaleString('id-ID');
+    document.getElementById('confirmText').textContent   = isQris
+        ? 'Tampilkan QR Code QRIS untuk dibayar'
+        : 'Pastikan pembayaran tunai sudah diterima';
+
     document.getElementById('confirmDialog').showModal();
 }
 
 function afterConfirm() {
     document.getElementById('confirmDialog').close();
     if (selectedMetodeNama.toLowerCase().includes('qris')) {
-        showQris();
+        startQrisFlow();
     } else {
-        prosesCheckoutFinal();
+        prosesCheckoutCash();
     }
 }
 
-// QRIS dummy ─────────────────────────────
-function showQris() {
+// ─── QRIS Flow (Bank Nagari real API + polling) ──────────────
+let qrisTimerInterval = null;
+let qrisPollInterval = null;
+let qrisExpiresAt = null;
+
+function qrisShowLoading() {
+    document.getElementById('qrisImg').classList.remove('expired');
+    document.getElementById('qrisImg').innerHTML =
+        '<div class="qris-loader"><div class="spinner"></div><p>Menghubungi Bank Nagari...</p></div>';
+    document.getElementById('qrisTimerText').textContent = '05:00';
+    document.getElementById('qrisTimer').classList.remove('danger');
+    document.getElementById('qrisTimer').style.display = '';
+    document.getElementById('qrisStatus').innerHTML =
+        '<i class="fa-solid fa-spinner"></i><span>Menunggu pembayaran...</span>';
+    document.getElementById('qrisStatus').style.cssText = '';
+    document.getElementById('qrisBtnRetry').style.display = 'none';
+}
+
+function qrisShowError(msg) {
+    if (qrisTimerInterval) { clearInterval(qrisTimerInterval); qrisTimerInterval = null; }
+    if (qrisPollInterval)  { clearInterval(qrisPollInterval);  qrisPollInterval  = null; }
+
+    document.getElementById('qrisImg').innerHTML = `
+        <div class="qris-error-inner">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <p>${msg}</p>
+        </div>`;
+    document.getElementById('qrisTimer').style.display = 'none';
+    document.getElementById('qrisStatus').style.background = '#fee2e2';
+    document.getElementById('qrisStatus').style.color = '#991b1b';
+    document.getElementById('qrisStatus').innerHTML =
+        '<i class="fa-solid fa-triangle-exclamation" style="animation:none;"></i><span>Gagal generate QR</span>';
+    document.getElementById('qrisBtnRetry').style.display = '';
+}
+
+async function startQrisFlow() {
+    if (!currentTrxId) return;
+
+    // Reset UI & buka dialog
     document.getElementById('qrisAmount').textContent = 'Rp ' + Number(currentTotal).toLocaleString('id-ID');
-    const payload = `DUMMY|SIRP|TRX${currentTrxId}|${currentTotal}|${Date.now()}`;
+    document.getElementById('qrisBilling').textContent = currentTrxData?.billing_number || '-';
+    document.getElementById('qrisPlat').textContent = currentTrxData?.nomor_polisi || '-';
+    qrisShowLoading();
 
+    if (!document.getElementById('qrisDialog').open) {
+        document.getElementById('qrisDialog').showModal();
+    }
+
+    try {
+        const res = await fetch(`{{ url('/petugas/qris/generate') }}/${currentTrxId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            qrisShowError(data.message || 'Gagal generate QR dari server');
+            return;
+        }
+
+        renderQr(data.qr_string, data.qr_type || 'qr_string');
+        document.getElementById('qrisBilling').textContent = data.billing_number;
+        qrisExpiresAt = new Date(data.expires_at).getTime();
+
+        startQrisCountdown();
+        startQrisPolling(data.status_url, data.sukses_url);
+
+    } catch(e) {
+        qrisShowError('Tidak dapat menghubungi server.<br>' + e.message);
+    }
+}
+
+function renderQr(qrString, qrType) {
     const container = document.getElementById('qrisImg');
+    container.classList.remove('expired');
     container.innerHTML = '';
-    QRCode.toCanvas(payload, { width: 200, margin: 1, color: { dark: '#0f2a5e', light: '#ffffff' } }, function(err, c) {
-        if (err) { container.textContent = 'Gagal generate QR'; return; }
-        container.appendChild(c);
-    });
-    document.getElementById('qrisDialog').showModal();
-}
-function confirmQrisPaid() {
-    document.getElementById('qrisDialog').close();
-    prosesCheckoutFinal();
+
+    if (qrType === 'base64_png') {
+        // Bank Nagari mengembalikan base64 PNG langsung
+        const img = document.createElement('img');
+        img.src = 'data:image/png;base64,' + qrString;
+        img.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:8px;display:block;';
+        img.onerror = () => {
+            container.innerHTML = '<div class="qris-loader" style="color:#ef4444;"><i class="fa-solid fa-circle-exclamation" style="font-size:1.5rem;"></i><p>Gagal render gambar QR</p></div>';
+        };
+        container.appendChild(img);
+    } else {
+        // QR string teks biasa — generate dengan QRCode.js
+        QRCode.toCanvas(qrString, {
+            width: 220, margin: 1, errorCorrectionLevel: 'M',
+            color: { dark: '#0f2a5e', light: '#ffffff' }
+        }, function(err, c) {
+            if (err) {
+                container.innerHTML = '<div class="qris-loader" style="color:#ef4444;">Gagal render QR</div>';
+                return;
+            }
+            container.appendChild(c);
+        });
+    }
 }
 
-async function prosesCheckoutFinal() {
+function startQrisCountdown() {
+    if (qrisTimerInterval) clearInterval(qrisTimerInterval);
+    qrisTimerInterval = setInterval(() => {
+        const remaining = Math.max(0, qrisExpiresAt - Date.now());
+        const m = Math.floor(remaining / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+        document.getElementById('qrisTimerText').textContent =
+            String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+
+        if (remaining <= 60000) document.getElementById('qrisTimer').classList.add('danger');
+
+        if (remaining <= 0) {
+            clearInterval(qrisTimerInterval);
+            qrisExpired();
+        }
+    }, 250);
+}
+
+function qrisExpired() {
+    document.getElementById('qrisImg').classList.add('expired');
+    document.getElementById('qrisStatus').innerHTML = '<i class="fa-solid fa-clock"></i><span>QR Code kedaluwarsa. Silakan ulangi.</span>';
+    document.getElementById('qrisStatus').style.background = 'var(--danger-soft)';
+    document.getElementById('qrisStatus').style.color = 'var(--danger)';
+    if (qrisPollInterval) { clearInterval(qrisPollInterval); qrisPollInterval = null; }
+}
+
+function startQrisPolling(statusUrl, suksesUrl) {
+    if (qrisPollInterval) clearInterval(qrisPollInterval);
+
+    let polling = false;
+    qrisPollInterval = setInterval(async () => {
+        if (polling) return;
+        polling = true;
+        try {
+            const r = await fetch(statusUrl, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const d = await r.json();
+            if (d.success && d.lunas) {
+                clearInterval(qrisPollInterval);
+                clearInterval(qrisTimerInterval);
+                qrisPollInterval = null;
+                // Tampilkan animasi success singkat lalu redirect
+                document.getElementById('qrisStatus').innerHTML = '<i class="fa-solid fa-circle-check" style="animation:none;color:var(--success)"></i><span style="color:var(--success);">Pembayaran diterima! Mengarahkan...</span>';
+                document.getElementById('qrisStatus').style.background = 'var(--success-soft)';
+                stopCamera();
+                setTimeout(() => { window.location.href = suksesUrl; }, 900);
+            }
+        } catch(e) { /* abaikan, lanjut polling */ }
+        polling = false;
+    }, 3000); // poll tiap 3 detik
+}
+
+function cancelQris() {
+    if (qrisTimerInterval) clearInterval(qrisTimerInterval);
+    if (qrisPollInterval)  clearInterval(qrisPollInterval);
+    qrisTimerInterval = qrisPollInterval = null;
+    document.getElementById('qrisDialog').close();
+}
+
+// ─── Cash flow ─────────────────────────────
+async function prosesCheckoutCash() {
     if (!selectedMetode || !currentTrxId) return;
     const btn = document.getElementById('btnCheckout');
     btn.disabled = true;
@@ -611,8 +972,17 @@ async function prosesCheckoutFinal() {
             body: JSON.stringify({ id_metode_pembayaran: selectedMetode })
         });
         const data = await res.json();
-        if (data.success) showSuccess(data);
-        else { alert(data.message || 'Gagal proses'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Proses Checkout'; }
+        if (data.success && data.redirect) {
+            stopCamera();
+            window.location.href = data.redirect;
+        } else if (data.success) {
+            stopCamera();
+            window.location.href = '{{ url('/petugas/dashboard') }}';
+        } else {
+            alert(data.message || 'Gagal proses');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Proses Checkout';
+        }
     } catch(e) {
         alert('Terjadi kesalahan jaringan');
         btn.disabled = false;
@@ -620,32 +990,9 @@ async function prosesCheckoutFinal() {
     }
 }
 
-function showSuccess(data) {
-    stopCamera();
-    document.getElementById('mainArea').innerHTML = `
-        <div class="success-wrap">
-            <div class="success-icon"><i class="fa-solid fa-check"></i></div>
-            <h2>Checkout Berhasil!</h2>
-            <p>Kendaraan ${data.nomor_polisi || ''} telah keluar</p>
-            <div class="trx-card" style="margin:20px 0;text-align:left;">
-                <div class="trx-row"><span class="trx-label">No. Referensi</span><span class="trx-value">${data.nomor_referensi || '-'}</span></div>
-                <div class="trx-row"><span class="trx-label">Nomor Polisi</span><span class="trx-value">${data.nomor_polisi || '-'}</span></div>
-                <div class="trx-row"><span class="trx-label">Durasi</span><span class="trx-value">${data.durasi || '-'}</span></div>
-                <div class="trx-row"><span class="trx-label">Metode Bayar</span><span class="trx-value">${data.metode_nama || '-'}</span></div>
-                <div class="trx-row total"><span class="trx-label">Total Dibayar</span><span class="trx-value">Rp ${Number(data.total || 0).toLocaleString('id-ID')}</span></div>
-            </div>
-            <a href="{{ route('petugas.dashboard') }}" class="btn btn-primary btn-full" style="padding:14px;">
-                <i class="fa-solid fa-house"></i> Kembali ke Dashboard
-            </a>
-            <a href="{{ route('petugas.scan-checkout') }}" class="btn btn-secondary btn-full" style="margin-top:8px;">
-                Checkout Lain
-            </a>
-        </div>`;
-}
-
 function resetScan() {
     document.getElementById('resultSection').style.display = 'none';
-    currentTrxId = null; selectedMetode = null; selectedMetodeNama = ''; currentTotal = 0;
+    currentTrxId = null; selectedMetode = null; selectedMetodeNama = ''; currentTotal = 0; currentTrxData = null;
     const mi = document.getElementById('manualInput'); if (mi) mi.value = '';
 }
 

@@ -96,6 +96,11 @@ class Transaksi extends Model
 
     public static function generateBillingNumber(): string
     {
-        return 'BIL-' . strtoupper(substr(md5(uniqid('', true)), 0, 10));
+        // Format numerik 12 digit: YYMMDD + 6 digit random.
+        // Wajib numerik karena Bank Nagari QRIS API mengharapkan billing_number numerik.
+        do {
+            $kode = date('ymd') . str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (static::where('billing_number', $kode)->exists());
+        return $kode;
     }
 }

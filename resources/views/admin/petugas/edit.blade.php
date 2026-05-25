@@ -52,13 +52,13 @@
 
                 <div class="form-group">
                     <label class="form-label">Lokasi Tugas</label>
-                    @php $lokasiAktif = $petugas->id_lokasi ?? []; @endphp
+                    @php $lokasiAktif = old('id_lokasi', $petugas->lokasi->pluck('id')->toArray()); @endphp
                     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:14px;background:var(--gray-50);border-radius:12px;border:1.5px solid var(--gray-200);">
                         @foreach($lokasi as $l)
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.86rem;font-weight:500;padding:8px;border-radius:8px;">
                             <input type="checkbox" name="id_lokasi[]" value="{{ $l->id }}"
                                    style="accent-color:var(--blue-light);width:16px;height:16px;"
-                                   {{ in_array($l->id, old('id_lokasi', $lokasiAktif)) ? 'checked' : '' }}>
+                                   {{ in_array($l->id, $lokasiAktif) ? 'checked' : '' }}>
                             {{ $l->nama }}
                         </label>
                         @endforeach

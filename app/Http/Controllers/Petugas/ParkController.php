@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Petugas;
 
 use App\Http\Controllers\Controller;
 use App\Models\{Transaksi, Tarif, Lokasi, MetodePembayaran};
+use App\Services\QrisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -11,7 +12,7 @@ use Carbon\Carbon;
 
 class ParkController extends Controller
 {
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $user    = Auth::user();
         $petugas = $user->petugas;
@@ -20,15 +21,30 @@ class ParkController extends Controller
             return redirect()->route('login')->withErrors(['username' => 'Data petugas tidak ditemukan.']);
         }
 
-        $lokasiIds  = is_array($petugas->id_lokasi) ? $petugas->id_lokasi : [];
-        $lokasi     = count($lokasiIds) ? Lokasi::whereIn('id', $lokasiIds)->get() : collect();
-        $today      = Carbon::today();
+        $semuaLokasi = $petugas->lokasi;
+
+        // Simpan pilihan lokasi ke session, atau baca dari session
+        if ($request->has('lokasi_id')) {
+            $lid = (int) $request->lokasi_id;
+            session(['petugas_lokasi_id' => $lid ?: null]);
+        }
+        $lokasiAktifId = session('petugas_lokasi_id');
+
+        // Validasi lokasi aktif masih milik petugas ini
+        $lokasiAktif = $lokasiAktifId
+            ? $semuaLokasi->firstWhere('id', $lokasiAktifId)
+            : null;
+
+        $today = Carbon::today();
+
+        $baseQ = fn() => Transaksi::where('id_petugas', $petugas->id)
+                            ->whereDate('tgl', $today)
+                            ->when($lokasiAktif, fn($q) => $q->where('id_lokasi', $lokasiAktif->id));
 
         $stats = [
-            'transaksi_hari_ini' => Transaksi::where('id_petugas', $petugas->id)->whereDate('tgl', $today)->count(),
-            'kendaraan_parkir'   => Transaksi::where('id_petugas', $petugas->id)->whereDate('tgl', $today)->where('status', 0)->count(),
-            'pendapatan_hari_ini' => (float) Transaksi::where('id_petugas', $petugas->id)
-                                        ->whereDate('tgl', $today)->where('status', 1)
+            'transaksi_hari_ini'  => $baseQ()->count(),
+            'kendaraan_parkir'    => $baseQ()->where('status', 0)->count(),
+            'pendapatan_hari_ini' => (float) $baseQ()->where('status', 1)
                                         ->join('tarif', 'transaksi.id_tarif', '=', 'tarif.id')
                                         ->sum('tarif.tarif'),
         ];
@@ -37,18 +53,21 @@ class ParkController extends Controller
                         ->where('id_petugas', $petugas->id)
                         ->whereDate('tgl', $today)
                         ->where('status', 0)
+                        ->when($lokasiAktif, fn($q) => $q->where('id_lokasi', $lokasiAktif->id))
                         ->latest()->limit(10)->get();
 
-        return view('petugas.dashboard.index', compact('petugas', 'lokasi', 'stats', 'aktivParkir'));
+        return view('petugas.dashboard.index', compact(
+            'petugas', 'semuaLokasi', 'lokasiAktif', 'stats', 'aktivParkir'
+        ));
     }
 
     public function formTambah()
     {
-        $petugas    = Auth::user()->petugas;
-        $lokasiIds  = is_array($petugas->id_lokasi) ? $petugas->id_lokasi : [];
-        $lokasi     = count($lokasiIds) ? Lokasi::whereIn('id', $lokasiIds)->get() : collect();
-        $tarif      = Tarif::all();
-        return view('petugas.dashboard.tambah', compact('lokasi', 'tarif', 'petugas'));
+        $petugas       = Auth::user()->petugas;
+        $lokasi        = $petugas->lokasi;
+        $tarif         = Tarif::all();
+        $lokasiAktifId = session('petugas_lokasi_id');
+        return view('petugas.dashboard.tambah', compact('lokasi', 'tarif', 'petugas', 'lokasiAktifId'));
     }
 
     public function simpanMasuk(Request $request)
@@ -153,6 +172,7 @@ class ParkController extends Controller
             'transaksi' => [
                 'id'              => $transaksi->id,
                 'nomor_referensi' => $transaksi->reference_number,
+                'billing_number'  => $transaksi->billing_number,
                 'nomor_polisi'    => $transaksi->nomor_polisi,
                 'lokasi'          => $transaksi->lokasi->nama ?? '-',
                 'tarif_nama'      => $transaksi->tarif->nama ?? '-',
@@ -200,6 +220,10 @@ class ParkController extends Controller
         return view('petugas.dashboard.checkout', compact('transaksi', 'metode'));
     }
 
+    /**
+     * Proses checkout untuk metode CASH (langsung lunas).
+     * Untuk QRIS, gunakan generateQris() lalu tunggu callback bank.
+     */
     public function prosesCheckout(Request $request, Transaksi $transaksi)
     {
         $request->validate(['id_metode_pembayaran' => 'required|exists:metode_pembayaran,id']);
@@ -233,11 +257,96 @@ class ParkController extends Controller
                 'durasi'           => $durasi,
                 'metode_nama'      => $metode->nama ?? '-',
                 'total'            => (float) ($transaksi->tarif->tarif ?? 0),
+                'redirect'         => route('petugas.checkout-sukses', $transaksi->id),
             ]);
         }
 
-        return redirect()->route('petugas.dashboard')
-            ->with('success', 'Checkout berhasil! Kendaraan ' . $transaksi->nomor_polisi . ' telah keluar.');
+        return redirect()->route('petugas.checkout-sukses', $transaksi->id);
+    }
+
+    /**
+     * Generate QRIS via Bank Nagari untuk transaksi tertentu.
+     * Set jam_keluar + metode (status tetap 0 sampai dibayar).
+     */
+    public function generateQris(Request $request, Transaksi $transaksi, QrisService $qris)
+    {
+        if ($transaksi->status == 1) {
+            return response()->json(['success' => false, 'message' => 'Transaksi sudah lunas'], 422);
+        }
+
+        $jamMasuk  = Carbon::parse($transaksi->tgl->format('Y-m-d') . ' ' . $transaksi->jam_masuk);
+        $jamKeluar = Carbon::now();
+        $amount    = (int) ($transaksi->tarif->tarif ?? 0);
+
+        // Set metode QRIS, jam_keluar (sementara), outlet/pjsp — status biarkan 0.
+        $metodeQris = MetodePembayaran::whereRaw('LOWER(nama) = ?', ['qris'])->first();
+
+        $transaksi->update([
+            'jam_keluar'           => $jamKeluar->format('H:i:s'),
+            'id_metode_pembayaran' => $metodeQris->id ?? null,
+            'amount'               => (string) $amount,
+            'outlet_id'            => $qris->getOutletId(),
+            'pjsp'                 => $qris->getPjsp(),
+        ]);
+
+        $result = $qris->generate($amount, $transaksi->billing_number);
+
+        if (!$result['ok']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal generate QRIS: ' . ($result['error'] ?? 'unknown'),
+                'raw'     => $result['raw'],
+            ], 502);
+        }
+
+        return response()->json([
+            'success'        => true,
+            'qr_string'      => $result['qr_string'],
+            'qr_type'        => $result['qr_type'] ?? 'qr_string', // ← base64_png atau qr_string
+            'billing_number' => $transaksi->billing_number,
+            'amount'         => $amount,
+            'expires_at'     => Carbon::now()->addMinutes(5)->toIso8601String(),
+            'status_url'     => route('petugas.checkout-status', $transaksi->id),
+            'sukses_url'     => route('petugas.checkout-sukses', $transaksi->id),
+        ]);
+    }
+
+    /**
+     * Polling endpoint — frontend cek status setiap 3-5 detik.
+     */
+    public function checkStatus(Transaksi $transaksi)
+    {
+        $transaksi->load('metodePembayaran');
+
+        return response()->json([
+            'success'    => true,
+            'status'     => (int) $transaksi->status,
+            'lunas'      => (int) $transaksi->status === 1,
+            'metode'     => $transaksi->metodePembayaran->nama ?? null,
+            'amount'     => $transaksi->amount,
+            'sukses_url' => route('petugas.checkout-sukses', $transaksi->id),
+        ]);
+    }
+
+    /**
+     * Halaman sukses pembayaran (animasi).
+     */
+    public function sukses(Transaksi $transaksi)
+    {
+        $transaksi->load(['tarif', 'lokasi', 'metodePembayaran']);
+
+        if ($transaksi->status != 1) {
+            return redirect()->route('petugas.dashboard')
+                ->withErrors(['msg' => 'Transaksi belum lunas.']);
+        }
+
+        $jamMasuk  = Carbon::parse($transaksi->tgl->format('Y-m-d') . ' ' . $transaksi->jam_masuk);
+        $jamKeluar = $transaksi->jam_keluar
+            ? Carbon::parse($transaksi->tgl->format('Y-m-d') . ' ' . $transaksi->jam_keluar)
+            : Carbon::now();
+        $durasi    = $jamMasuk->diffForHumans($jamKeluar, ['parts' => 2, 'short' => true, 'syntax' => Carbon::DIFF_ABSOLUTE]);
+
+        return view('petugas.dashboard.sukses', compact('transaksi', 'durasi'));
     }
 
     /**
@@ -358,8 +467,7 @@ class ParkController extends Controller
     {
         $user          = Auth::user();
         $petugas       = $user->petugas;
-        $lokasiIds     = ($petugas && is_array($petugas->id_lokasi)) ? $petugas->id_lokasi : [];
-        $lokasiPetugas = count($lokasiIds) ? Lokasi::whereIn('id', $lokasiIds)->get() : collect();
+        $lokasiPetugas = $petugas ? $petugas->lokasi : collect();
         $today         = Carbon::today();
 
         $statHariIni = $petugas ? [

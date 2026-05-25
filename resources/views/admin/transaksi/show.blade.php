@@ -80,7 +80,7 @@
                         <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-2xl mx-auto mb-2">🚗</div>
                         <p class="text-xs text-slate-400">Jam Masuk</p>
                         <p class="font-black text-blue-700 text-xl">{{ \Carbon\Carbon::parse($transaksi->jam_masuk)->format('H:i') }}</p>
-                        <p class="text-xs text-slate-500">{{ \Carbon\Carbon::parse($transaksi->jam_masuk)->format('d/m/Y') }}</p>
+                        <p class="text-xs text-slate-500">{{ \Carbon\Carbon::parse($transaksi->jam_masuk)->translatedFormat('d F Y') }}</p>
                     </div>
 
                     <div class="flex-1 relative flex items-center justify-center">
@@ -97,7 +97,7 @@
                             <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-2xl mx-auto mb-2">✅</div>
                             <p class="text-xs text-slate-400">Jam Keluar</p>
                             <p class="font-black text-green-700 text-xl">{{ \Carbon\Carbon::parse($transaksi->jam_keluar)->format('H:i') }}</p>
-                            <p class="text-xs text-slate-500">{{ \Carbon\Carbon::parse($transaksi->jam_keluar)->format('d/m/Y') }}</p>
+                            <p class="text-xs text-slate-500">{{ \Carbon\Carbon::parse($transaksi->jam_keluar)->translatedFormat('d F Y') }}</p>
                         @else
                             <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl mx-auto mb-2 animate-pulse">🟡</div>
                             <p class="text-xs text-slate-400">Keluar</p>

@@ -51,7 +51,7 @@ canvas { max-height: 260px; }
         <div class="stat-card-value">{{ number_format($stats['transaksi_hari_ini']) }}</div>
         <div class="stat-card-label">Transaksi Hari Ini</div>
         <div class="stat-card-trend" style="color:var(--blue-light)">
-            <i class="fa-solid fa-calendar-day"></i> {{ now()->format('d M Y') }}
+            <i class="fa-solid fa-calendar-day"></i> {{ now()->translatedFormat('d F Y') }}
         </div>
     </div>
 
@@ -89,7 +89,7 @@ canvas { max-height: 260px; }
     <div class="card">
         <div class="card-header">
             <h4><i class="fa-solid fa-chart-line" style="color:var(--blue-light);margin-right:6px"></i>Transaksi 7 Hari Terakhir</h4>
-            <span class="badge-pill badge-info">{{ now()->format('M Y') }}</span>
+            <span class="badge-pill badge-info">{{ now()->translatedFormat('F Y') }}</span>
         </div>
         <div class="card-body">
             <div class="chart-wrap">

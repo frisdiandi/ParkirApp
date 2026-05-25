@@ -44,4 +44,15 @@ return [
         'engine'   => (int) env('OCR_SPACE_ENGINE', 2),
     ],
 
+    'bank_nagari' => [
+        'endpoint'      => env('BANK_NAGARI_ENDPOINT', 'https://demo.banknagari.co.id:7810/APIAgregatorService/Services/PublicRequest'),
+        'authorization' => env('BANK_NAGARI_AUTHORIZATION', 'BN UEox'),
+        'secret_key'    => env('BANK_NAGARI_SECRET_KEY', 'BKD*#*@PJ1QRS!BN=='),
+        'request_id'    => env('BANK_NAGARI_REQUEST_ID', 'QR03'),
+        'outlet_id'     => env('BANK_NAGARI_OUTLET_ID', '007210024'),
+        'pjsp'          => env('BANK_NAGARI_PJSP', 'NGR'),
+        // SSL verify off untuk demo server self-signed
+        'verify'        => (bool) env('BANK_NAGARI_VERIFY_SSL', false),
+    ],
+
 ];

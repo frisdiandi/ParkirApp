@@ -43,6 +43,11 @@ Route::prefix('petugas')->middleware(['auth', 'level:2'])->name('petugas.')->gro
     Route::post('/checkout/{transaksi}', [ParkController::class, 'prosesCheckout'])->name('proses-checkout');
     Route::get('/profile', [ParkController::class, 'profile'])->name('profile');
     Route::post('/scan-plate', [ParkController::class, 'scanPlate'])->name('scan-plate');
+
+    // QRIS flow
+    Route::post('/qris/generate/{transaksi}', [ParkController::class, 'generateQris'])->name('qris.generate');
+    Route::get('/transaksi/{transaksi}/status', [ParkController::class, 'checkStatus'])->name('checkout-status');
+    Route::get('/checkout-sukses/{transaksi}', [ParkController::class, 'sukses'])->name('checkout-sukses');
 });
 
 // PWA manifest & service worker

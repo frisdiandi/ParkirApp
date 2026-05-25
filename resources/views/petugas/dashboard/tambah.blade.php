@@ -16,9 +16,11 @@
 .page-header p  { font-size: .76rem; color: var(--gray-400); margin-top: 1px; }
 
 #camera-section {
-    background: #000; border-radius: 16px;
-    overflow: hidden; position: relative; margin-bottom: 12px;
-    aspect-ratio: 4/3; max-height: 280px;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden; position: relative;
+    width: 100%; margin-bottom: 14px;
+    aspect-ratio: 4/3; max-height: 340px;
 }
 #video { width: 100%; height: 100%; object-fit: cover; display: block; }
 #canvas { display: none; }
@@ -171,7 +173,8 @@
         <select name="id_lokasi" class="form-control" id="lokasiSelect" required>
             <option value="">— Pilih Lokasi —</option>
             @foreach($lokasi as $l)
-            <option value="{{ $l->id }}" {{ old('id_lokasi') == $l->id ? 'selected' : '' }}>{{ $l->nama }}</option>
+            <option value="{{ $l->id }}"
+                {{ old('id_lokasi', $lokasiAktifId) == $l->id ? 'selected' : '' }}>{{ $l->nama }}</option>
             @endforeach
         </select>
     </div>
@@ -338,17 +341,6 @@ function selectTarif(el) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Auto-set lokasi dari localStorage
-    const lokasiId = localStorage.getItem('lokasiAktif');
-    if (lokasiId) {
-        const sel = document.getElementById('lokasiSelect');
-        if (sel) {
-            for (let opt of sel.options) {
-                if (opt.value == lokasiId) { opt.selected = true; break; }
-            }
-        }
-    }
-
     document.getElementById('nopolInput').addEventListener('input', function() {
         this.value = this.value.toUpperCase();
         if (this.value) {

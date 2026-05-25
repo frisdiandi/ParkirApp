@@ -12,7 +12,7 @@ class PetugasController extends Controller
 {
     public function index()
     {
-        $petugas = Petugas::with('user')->latest()->paginate(10);
+        $petugas = Petugas::with(['user', 'lokasi'])->latest()->paginate(10);
         return view('admin.petugas.index', compact('petugas'));
     }
 
@@ -50,12 +50,13 @@ class PetugasController extends Controller
             $foto = $request->file('foto')->store('petugas', 'public');
         }
 
-        Petugas::create([
-            'id_user'       => $user->id,
-            'id_lokasi'     => json_encode($request->id_lokasi ?? []),
+        $petugas = Petugas::create([
+            'id_user'        => $user->id,
             'nomor_rekening' => $request->nomor_rekening,
-            'foto'          => $foto,
+            'foto'           => $foto,
         ]);
+
+        $petugas->lokasi()->sync($request->id_lokasi ?? []);
 
         return redirect()->route('admin.petugas.index')->with('success', 'Petugas berhasil ditambahkan.');
     }
@@ -75,6 +76,7 @@ class PetugasController extends Controller
             'contact'         => 'nullable|string|max:20',
             'status'          => 'required|in:0,1',
             'id_lokasi'       => 'nullable|array',
+            'id_lokasi.*'     => 'exists:lokasi,id',
             'nomor_rekening'  => 'nullable|string|max:50',
             'foto'            => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
@@ -92,10 +94,7 @@ class PetugasController extends Controller
 
         $petugas->user->update($userData);
 
-        $petugasData = [
-            'id_lokasi'     => json_encode($request->id_lokasi ?? []),
-            'nomor_rekening' => $request->nomor_rekening,
-        ];
+        $petugasData = ['nomor_rekening' => $request->nomor_rekening];
 
         if ($request->hasFile('foto')) {
             if ($petugas->foto) Storage::disk('public')->delete($petugas->foto);
@@ -103,6 +102,8 @@ class PetugasController extends Controller
         }
 
         $petugas->update($petugasData);
+        $petugas->lokasi()->sync($request->id_lokasi ?? []);
+
         return redirect()->route('admin.petugas.index')->with('success', 'Petugas berhasil diperbarui.');
     }
 

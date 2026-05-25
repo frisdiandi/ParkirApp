@@ -9,11 +9,7 @@ class Petugas extends Model
     protected $table = 'petugas';
 
     protected $fillable = [
-        'id_user', 'id_lokasi', 'nomor_rekening', 'foto',
-    ];
-
-    protected $casts = [
-        'id_lokasi' => 'array',
+        'id_user', 'nomor_rekening', 'foto',
     ];
 
     public function user()
@@ -23,8 +19,8 @@ class Petugas extends Model
 
     public function lokasi()
     {
-        $ids = is_array($this->id_lokasi) ? $this->id_lokasi : [];
-        return count($ids) ? Lokasi::whereIn('id', $ids)->get() : collect();
+        return $this->belongsToMany(Lokasi::class, 'petugas_lokasi', 'petugas_id', 'lokasi_id')
+                    ->withTimestamps();
     }
 
     public function transaksi()
