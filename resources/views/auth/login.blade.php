@@ -251,23 +251,110 @@
             font-size: 0.78rem; color: var(--gray-400);
         }
 
-        /* PWA install banner */
-        .pwa-banner {
-            display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-            background: var(--navy); color: var(--white);
-            padding: 16px 20px; align-items: center; gap: 12px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+        /* PWA install modal — selalu muncul saat login dibuka di browser */
+        .pwa-modal-overlay {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(15,42,94,0.65); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center;
+            padding: 16px; animation: fadeIn .25s ease;
         }
-        .pwa-banner.show { display: flex; }
-        .pwa-banner-text { flex: 1; font-size: 0.85rem; }
-        .pwa-banner-text strong { display: block; font-size: 0.95rem; }
-        .pwa-banner button {
-            padding: 8px 18px; border-radius: 8px; border: none;
-            font-family: inherit; font-weight: 600; cursor: pointer;
-            font-size: 0.82rem;
+        .pwa-modal-overlay.show { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn  { from { opacity: 0; transform: translateY(20px) scale(.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .pwa-modal {
+            background: #fff; border-radius: 20px; max-width: 420px; width: 100%;
+            overflow: hidden; animation: popIn .35s cubic-bezier(.2,.9,.3,1.2);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+            max-height: 92vh; display: flex; flex-direction: column;
         }
-        .btn-install { background: var(--accent); color: var(--navy); }
-        .btn-dismiss { background: transparent; color: rgba(255,255,255,0.6); }
+        .pwa-modal-head {
+            background: linear-gradient(135deg, var(--navy), var(--blue-light));
+            color: #fff; padding: 22px 22px 18px; text-align: center;
+            position: relative;
+        }
+        .pwa-modal-head .close-btn {
+            position: absolute; top: 12px; right: 12px;
+            width: 30px; height: 30px; border-radius: 50%;
+            background: rgba(255,255,255,0.18); color: #fff;
+            border: none; cursor: pointer; font-size: .85rem;
+        }
+        .pwa-modal-head .app-icon {
+            width: 64px; height: 64px; margin: 0 auto 10px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 16px; display: flex; align-items: center; justify-content: center;
+        }
+        .pwa-modal-head h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; }
+        .pwa-modal-head p  { font-size: .82rem; color: rgba(255,255,255,0.8); }
+
+        .pwa-modal-body {
+            padding: 18px 22px 12px; overflow-y: auto;
+        }
+        .platform-tabs {
+            display: flex; gap: 6px; background: var(--gray-50);
+            border-radius: 10px; padding: 4px; margin-bottom: 14px;
+        }
+        .platform-tab {
+            flex: 1; padding: 8px 6px; border: none; background: transparent;
+            border-radius: 7px; font-family: inherit; font-size: .78rem;
+            font-weight: 700; color: var(--gray-600); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+        .platform-tab.active { background: #fff; color: var(--blue-light); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+        .step-list {
+            list-style: none; padding: 0; margin: 0;
+        }
+        .step-item {
+            display: flex; gap: 12px; align-items: flex-start;
+            padding: 10px 0; border-bottom: 1px solid var(--gray-100);
+        }
+        .step-item:last-child { border-bottom: none; }
+        .step-num {
+            flex-shrink: 0; width: 26px; height: 26px;
+            background: linear-gradient(135deg, var(--navy), var(--blue-light));
+            color: #fff; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .78rem; font-weight: 800;
+        }
+        .step-text { font-size: .85rem; color: var(--charcoal); line-height: 1.4; padding-top: 3px; }
+        .step-text strong { color: var(--blue-light); font-weight: 700; }
+        .step-text .ic-inline {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; background: var(--gray-100);
+            border-radius: 5px; margin: 0 2px; vertical-align: middle;
+            color: var(--blue-light);
+        }
+        .step-text .ic-inline svg { width: 13px; height: 13px; }
+
+        .pwa-modal-foot {
+            padding: 14px 22px 20px;
+            display: flex; flex-direction: column; gap: 8px;
+            border-top: 1px solid var(--gray-100);
+        }
+        .btn-pwa-install {
+            width: 100%; padding: 13px;
+            background: linear-gradient(135deg, var(--navy-mid), var(--blue-light));
+            color: #fff; border: none; border-radius: 12px;
+            font-size: .9rem; font-weight: 700; font-family: inherit;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all .2s;
+        }
+        .btn-pwa-install:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,0.35); }
+        .btn-pwa-install:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-pwa-skip {
+            width: 100%; padding: 11px;
+            background: transparent; color: var(--gray-500);
+            border: none; cursor: pointer; font-family: inherit;
+            font-size: .8rem; font-weight: 600;
+        }
+        .btn-pwa-skip:hover { color: var(--charcoal); }
+
+        .pwa-tip {
+            font-size: .72rem; color: var(--gray-500);
+            text-align: center; padding: 6px 0 0;
+            font-style: italic;
+        }
 
         /* Mobile responsive */
         @media (max-width: 680px) {
@@ -387,20 +474,113 @@
     </div>
 </div>
 
-<!-- PWA Install Banner -->
-<div class="pwa-banner" id="pwaBanner">
-    <svg width="36" height="36" viewBox="0 0 56 56" fill="none">
-        <rect width="56" height="56" rx="10" fill="#1a3a6b"/>
-        <path d="M14 34h28M16 34l3-8h18l3 8" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="20" cy="36" r="2.5" fill="#f59e0b"/>
-        <circle cx="36" cy="36" r="2.5" fill="#f59e0b"/>
-    </svg>
-    <div class="pwa-banner-text">
-        <strong>Install Aplikasi SIRP</strong>
-        Akses lebih cepat dari layar utama
+<!-- PWA Install Modal — selalu muncul saat dibuka di browser -->
+<div class="pwa-modal-overlay" id="pwaModal">
+    <div class="pwa-modal">
+        <div class="pwa-modal-head">
+            <button type="button" class="close-btn" onclick="closePwaModal()" aria-label="Tutup">✕</button>
+            <div class="app-icon">
+                <svg width="42" height="42" viewBox="0 0 56 56" fill="none">
+                    <path d="M14 34h28M16 34l3-8h18l3 8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="20" cy="36" r="2.8" fill="#f59e0b"/>
+                    <circle cx="36" cy="36" r="2.8" fill="#f59e0b"/>
+                    <path d="M26 20h4a3 3 0 0 1 0 6h-4v-6z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M26 20v10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h3>Install Aplikasi SIRP</h3>
+            <p>Akses lebih cepat tanpa buka browser</p>
+        </div>
+
+        <div class="pwa-modal-body">
+            <div class="platform-tabs" id="platformTabs">
+                <button type="button" class="platform-tab" data-tab="android" onclick="switchTab('android')">
+                    <i class="fa-brands fa-android"></i> Android
+                </button>
+                <button type="button" class="platform-tab" data-tab="ios" onclick="switchTab('ios')">
+                    <i class="fa-brands fa-apple"></i> iPhone / iPad
+                </button>
+                <button type="button" class="platform-tab" data-tab="desktop" onclick="switchTab('desktop')">
+                    <i class="fa-solid fa-desktop"></i> Desktop
+                </button>
+            </div>
+
+            {{-- Android instructions --}}
+            <div class="step-pane" id="pane-android" style="display:none">
+                <ol class="step-list">
+                    <li class="step-item">
+                        <div class="step-num">1</div>
+                        <div class="step-text">
+                            Tap tombol <strong>Install Sekarang</strong> di bawah, atau buka menu browser
+                            <span class="ic-inline"><i class="fa-solid fa-ellipsis-vertical"></i></span>
+                        </div>
+                    </li>
+                    <li class="step-item">
+                        <div class="step-num">2</div>
+                        <div class="step-text">Pilih <strong>"Install aplikasi"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong></div>
+                    </li>
+                    <li class="step-item">
+                        <div class="step-num">3</div>
+                        <div class="step-text">Konfirmasi dengan tap <strong>Install</strong>. Aplikasi SIRP akan muncul di home screen.</div>
+                    </li>
+                </ol>
+            </div>
+
+            {{-- iOS instructions --}}
+            <div class="step-pane" id="pane-ios" style="display:none">
+                <ol class="step-list">
+                    <li class="step-item">
+                        <div class="step-num">1</div>
+                        <div class="step-text">
+                            Tap ikon <strong>Bagikan</strong>
+                            <span class="ic-inline" title="Share">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 14v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/></svg>
+                            </span>
+                            di bagian bawah Safari.
+                        </div>
+                    </li>
+                    <li class="step-item">
+                        <div class="step-num">2</div>
+                        <div class="step-text">Gulir ke bawah, lalu pilih <strong>"Tambahkan ke Layar Utama"</strong> / <strong>"Add to Home Screen"</strong>.</div>
+                    </li>
+                    <li class="step-item">
+                        <div class="step-num">3</div>
+                        <div class="step-text">Tap <strong>"Tambah"</strong> / <strong>"Add"</strong> di pojok kanan atas.</div>
+                    </li>
+                </ol>
+                <p class="pwa-tip">Pastikan menggunakan browser <strong>Safari</strong> (bukan Chrome) di iOS.</p>
+            </div>
+
+            {{-- Desktop instructions --}}
+            <div class="step-pane" id="pane-desktop" style="display:none">
+                <ol class="step-list">
+                    <li class="step-item">
+                        <div class="step-num">1</div>
+                        <div class="step-text">Tap tombol <strong>Install Sekarang</strong> di bawah, atau klik ikon install
+                            <span class="ic-inline"><i class="fa-solid fa-download"></i></span>
+                            di kanan address bar.
+                        </div>
+                    </li>
+                    <li class="step-item">
+                        <div class="step-num">2</div>
+                        <div class="step-text">Pilih <strong>"Install"</strong> pada dialog yang muncul.</div>
+                    </li>
+                    <li class="step-item">
+                        <div class="step-num">3</div>
+                        <div class="step-text">Aplikasi SIRP akan tersedia sebagai aplikasi desktop terpisah.</div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="pwa-modal-foot">
+            <button type="button" class="btn-pwa-install" id="btnPwaInstall">
+                <i class="fa-solid fa-download"></i>
+                <span id="btnInstallText">Install Sekarang</span>
+            </button>
+            <button type="button" class="btn-pwa-skip" onclick="closePwaModal()">Nanti saja</button>
+        </div>
     </div>
-    <button class="btn-install" id="btnInstall">Install</button>
-    <button class="btn-dismiss" onclick="document.getElementById('pwaBanner').classList.remove('show')">✕</button>
 </div>
 
 <script>
@@ -416,28 +596,95 @@ function togglePassword() {
     }
 }
 
-// PWA
-let deferredPrompt;
+// ─── PWA Install Popup ─────────────────────────────────────────
+let deferredPrompt = null;
+
+function detectPlatform() {
+    const ua = navigator.userAgent || '';
+    if (/iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+    if (/Android/i.test(ua)) return 'android';
+    return 'desktop';
+}
+
+function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true
+        || document.referrer.startsWith('android-app://');
+}
+
+function switchTab(name) {
+    document.querySelectorAll('.platform-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === name);
+    });
+    document.querySelectorAll('.step-pane').forEach(p => {
+        p.style.display = p.id === 'pane-' + name ? '' : 'none';
+    });
+
+    // Tombol install hanya aktif untuk Android/Desktop dengan deferredPrompt;
+    // untuk iOS selalu disabled (instruksi manual saja)
+    const btn = document.getElementById('btnPwaInstall');
+    const txt = document.getElementById('btnInstallText');
+    if (name === 'ios') {
+        btn.disabled = true;
+        txt.textContent = 'Ikuti langkah di atas';
+    } else if (deferredPrompt) {
+        btn.disabled = false;
+        txt.textContent = 'Install Sekarang';
+    } else {
+        btn.disabled = true;
+        txt.textContent = 'Buka menu browser';
+    }
+}
+
+function showPwaModal() {
+    if (isStandalone()) return; // sudah terinstall — jangan tampilkan
+    document.getElementById('pwaModal').classList.add('show');
+}
+
+function closePwaModal() {
+    document.getElementById('pwaModal').classList.remove('show');
+}
+
+// Tangkap event install Android/Chrome supaya tombol "Install Sekarang" aktif
 window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     deferredPrompt = e;
-    document.getElementById('pwaBanner').classList.add('show');
+    // Jika tab Android/Desktop aktif, refresh state tombol
+    const active = document.querySelector('.platform-tab.active')?.dataset.tab;
+    if (active === 'android' || active === 'desktop') switchTab(active);
 });
 
-document.getElementById('btnInstall').addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        deferredPrompt = null;
-        document.getElementById('pwaBanner').classList.remove('show');
-    }
+document.getElementById('btnPwaInstall').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (outcome === 'accepted') closePwaModal();
+});
+
+// Sembunyikan modal jika user berhasil install
+window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    closePwaModal();
+});
+
+// Init: deteksi platform & tampilkan tab yang sesuai, lalu auto-show modal
+document.addEventListener('DOMContentLoaded', () => {
+    if (isStandalone()) return; // jangan ganggu user yang sudah install
+    const platform = detectPlatform();
+    switchTab(platform);
+    // delay 700ms biar halaman login tampil dulu, baru popup muncul
+    setTimeout(showPwaModal, 700);
+});
+
+// Tutup modal saat klik overlay (di luar kotak)
+document.getElementById('pwaModal').addEventListener('click', e => {
+    if (e.target.id === 'pwaModal') closePwaModal();
 });
 
 // Register SW
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').then(() => {
-        console.log('SW registered');
-    });
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 </script>
 </body>
