@@ -166,7 +166,7 @@ Silakan cek [halaman issues](https://github.com/frisdiandi/ParkirApp/issues) unt
 ## 📄 Lisensi
 
 ```
-Copyright (c) 2024 Future Generation Technology
+Copyright (c) 2026 Future Generation Technology
 
 Perangkat lunak ini dilisensikan di bawah Lisensi Future Generation Technology (FGT).
 Penggunaan, penyalinan, modifikasi, dan distribusi perangkat lunak ini
